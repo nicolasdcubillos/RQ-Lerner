@@ -1,0 +1,137 @@
+*/
+*!*
+*!*		Nombre: Cargue de Requisiciones desde Archivo Excel - Libreria Lerner
+*!*
+*!*		Autor: Nicolás David Cubillos
+*!*
+*!*		Contenido:
+*!*
+*!*		Fecha: 1 de junio de 2024
+*!*
+*/
+
+*---------------------------------------------------
+
+FUNCTION enviarMedio && Función principal: Hace uso de las demás funciones existentes en el PRG.
+*!* 	    Retorna verdadero si se timbra el medio, falso si ocurre algún error en cualquier momento.
+
+LPARAMETERS MEDIOBASE64, CURRENTPATH, ON, C_GLOBAL, TIPODCTO, NRODCTO, NOMBREARCHIVO, VERREQUESTRESPONSE
+
+STORE "" TO TRANSACTIONID
+STORE "" TO DIANCUNESHA256
+
+LOCAL XMLrequest
+SELECT C_GLOBAL
+
+XMLrequest = crearRequestUpload(S_USUARIO, S_CONTRASENA, S_COMPANYID, S_ACCOUNTID, MEDIOBASE64, NOMBREARCHIVO)
+TRANSACTIONID = enviarRequest(XMLrequest, CURRENTPATH, TIPODCTO, NRODCTO, 1, VERREQUESTRESPONSE)
+
+IF EMPTY(TRANSACTIONID)
+	RETURN .F.
+ELSE
+	almacenarTransacID(TIPODCTO, NRODCTO, TRANSACTIONID, ON)
+
+*!*				XMLrequest = crearRequestDownload(S_USUARIO, S_CONTRASENA, S_COMPANYID, S_ACCOUNTID, TIPODCTO, NRODCTO)
+*!*				DIANCUNESHA256 = enviarRequest(XMLrequest, CURRENTPATH, TIPODCTO, NRODCTO, 3)
+*!*				IF EMPTY(DIANCUNESHA256)
+*!*					RETURN .F.
+*!*
+*!*				ENDIF
+
+*!*				&&almacenarCuneDIAN(TIPODCTO, NRODCTO, DIANCUNESHA256, ON)
+*!*
+*!*				MESSAGEBOX("CUNEDIAN:" + DIANCUNESHA256)
+
+*!*			XMLrequest = crearRequestDocumentStatus(S_USUARIO, S_CONTRASENA, S_COMPANYID, S_ACCOUNTID, TRANSACTIONID)
+*!*			_CLIPTEXT = XMLrequest
+*!*			WAIT "" TIMEOUT 2
+*!*			&&MESSAGEBOX("Copiar acá el XML request.")
+*!*			IF enviarRequest(XMLrequest, CURRENTPATH, TIPODCTO, NRODCTO, 2) = "T"
+*!*				MESSAGEBOX("PASO BIEN" + TIPODCTO + NRODCTO")
+*!*			ELSE
+*!*				RETURN .F.
+*!*			ENDIF
+
+ENDIF
+
+RETURN .T. && Medio subido.
+
+ENDFUNC
+
+*---------------------------------------------------
+&& Carga el archivo de Excel y retorna un bool haciendo referencia al resultado
+
+FUNCTION UPLOAD_FILE AS STRING &
+
+* Crear una instancia de Excel
+oExcel = CREATEOBJECT("Excel.Application")
+
+* Abrir el libro de Excel
+oWorkbook = oExcel.Workbooks.OPEN(lcFileName)
+
+* Seleccionar la primera hoja
+oSheet = oWorkbook.Sheets(1)
+
+* Agregar una nueva columna para los errores al final de la hoja
+lnLastCol = oSheet.UsedRange.COLUMNS.COUNT + 1
+oSheet.Cells(1, lnLastCol).VALUE = "ERROR AL CARGAR ARCHIVO"
+
+* Definir el rango de las celdas que se leerán
+* Asumiendo que los datos comienzan en la fila 2 (la fila 1 contiene los encabezados)
+FOR lnRow = 2 TO oSheet.UsedRange.ROWS.COUNT
+	TRY
+		lcCodProveedor = IIF(TYPE("oSheet.Cells(lnRow, 1).Value") = "C", oSheet.Cells(lnRow, 1).VALUE, "")
+		lcNombreProveedor = IIF(TYPE("oSheet.Cells(lnRow, 2).Value") = "C", oSheet.Cells(lnRow, 2).VALUE, "")
+		lcISBN = IIF(TYPE("oSheet.Cells(lnRow, 3).Value") = "C", oSheet.Cells(lnRow, 3).VALUE, "")
+		lcTitulo = IIF(TYPE("oSheet.Cells(lnRow, 4).Value") = "C", oSheet.Cells(lnRow, 4).VALUE, "")
+		lcAutor = IIF(TYPE("oSheet.Cells(lnRow, 5).Value") = "C", oSheet.Cells(lnRow, 5).VALUE, "")
+		lcEditorial = IIF(TYPE("oSheet.Cells(lnRow, 6).Value") = "C", oSheet.Cells(lnRow, 6).VALUE, "")
+		lcTema = IIF(TYPE("oSheet.Cells(lnRow, 7).Value") = "C", oSheet.Cells(lnRow, 7).VALUE, "")
+		lnPrecio = IIF(TYPE("oSheet.Cells(lnRow, 8).Value") = "N", oSheet.Cells(lnRow, 8).VALUE, 0)
+		lnCantidad = IIF(TYPE("oSheet.Cells(lnRow, 9).Value") = "N", oSheet.Cells(lnRow, 9).VALUE, 0)
+		lcSede = IIF(TYPE("oSheet.Cells(lnRow, 10).Value") = "C", oSheet.Cells(lnRow, 10).VALUE, "")
+		lcLibrero = IIF(TYPE("oSheet.Cells(lnRow, 11).Value") = "C", oSheet.Cells(lnRow, 11).VALUE, "")
+		lcEstado = IIF(TYPE("oSheet.Cells(lnRow, 12).Value") = "C", oSheet.Cells(lnRow, 12).VALUE, "")
+
+* Insertar los valores en el cursor
+		INSERT INTO ExcelData VALUES ( ;
+			lcCodProveedor, ;
+			lcNombreProveedor, ;
+			lcISBN, ;
+			lcTitulo, ;
+			lcAutor, ;
+			lcEditorial, ;
+			lcTema, ;
+			lnPrecio, ;
+			lnCantidad, ;
+			lcSede, ;
+			lcLibrero, ;
+			lcEstado ;
+			)
+* Si no hay error, dejar la columna de error vacía
+		oSheet.Cells(lnRow, lnLastCol).VALUE = ""
+	CATCH TO oErr
+* En caso de error, registrar el mensaje de error en la nueva columna
+		lcErrorsWhileUploading = lcErrorsWhileUploading + 1
+		oSheet.Cells(lnRow, lnLastCol).VALUE = oErr.MESSAGE
+	ENDTRY
+NEXT
+
+* Guardar y cerrar el libro
+
+oWorkbook.CLOSE(.F.)
+oExcel.QUIT()
+
+* Liberar los objetos COM
+RELEASE oSheet, oWorkbook, oExcel
+
+* Seleccionar el cursor para iterar sobre los datos
+SELECT ExcelData
+BROWSE
+BROWSE
+
+RETURN lcErrorsWhileUploading
+
+ENDFUNC
+
+*---------------------------------------------------
