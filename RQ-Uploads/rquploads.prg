@@ -4,14 +4,14 @@
 *!*
 *!*		Autor: Nicolás David Cubillos
 *!*
-*!*		Contenido:
+*!*		Contenido: Cargue de Requisiciones desde Archivo Excel - Libreria Lerner
 *!*
 *!*		Fecha: 1 de junio de 2024
 *!*
 */
 
 *---------------------------------------------------
-FUNCTION uploadFile(lcFileName, outRqData) AS CURSOR & && Carga el archivo de Excel y retorna un bool haciendo referencia al resultado
+FUNCTION uploadFile(lcFileName, outRqData)
 
 LOCAL outErrorMsg
 TRY
@@ -53,7 +53,7 @@ TRY
 		lcNombreProveedor = validateLine(oSheet.Cells(lnRow, 2).VALUE, "C", oSheet.Cells(1, 2).VALUE, @outErrorMsg)
 		
 		lcISBN = validateLine(oSheet.Cells(lnRow, 3).VALUE, "C", oSheet.Cells(1, 3).VALUE, @outErrorMsg)
-		validateISBN(lcCodProveedor, @outErrorMsg)
+		validateISBN(lcISBN, @outErrorMsg)
 		
 		lcTitulo = TRANSFORM(oSheet.Cells(lnRow, 4).VALUE)
 		lcAutor = TRANSFORM(oSheet.Cells(lnRow, 5).VALUE)
@@ -95,7 +95,7 @@ TRY
 	NEXT
 	
 	IF lcLinesWithErrors > 0
-		lcErrorMessage = "Algunas filas en el archivo contienen errores de validación." + CHR(13) + "Revise el archivo Excel que se ha abierto para ver los detalles del error."
+		lcErrorMessage = "Algunas filas en el archivo contienen errores de validación." + CHR(13) + CHR(13) + "Revise el archivo Excel que se ha abierto para ver los detalles del error."
 		ERROR(lcErrorMessage)
 	ELSE
 		MESSAGEBOX ('Requisiciones cargadas correctamente desde el archivo.', 64)
@@ -137,10 +137,10 @@ ENDFUNC
 
 *---------------------------------------------------
 
-FUNCTION validateISBN(lcCodProveedor, outErrorMsg)
+FUNCTION validateISBN(lcISBN, outErrorMsg)
 LOCAL lcValidation
 
-lcSqlQuery = "SELECT CODIGO FROM MTMERCIA WHERE CODIGO = '" + TRANSFORM(lcCodProveedor) + "'"
+lcSqlQuery = "SELECT CODIGO FROM MTMERCIA WHERE CODIGO = '" + TRANSFORM(lcISBN) + "'"
 
 IF SQLEXEC(ON, lcSqlQuery, "lcValidation") != 1
 	ERROR("Error al validar el ISBN.")
@@ -184,7 +184,6 @@ FUNCTION validateResponsable(lcResponsable, outErrorMsg)
 LOCAL lcValidation
 
 lcSqlQuery = "SELECT CODCC FROM MTRESPON WHERE CODCC = '" + TRANSFORM(lcResponsable) + "'"
-_CLIPTEXT = lcSqlQuery
 
 IF SQLEXEC(ON, lcSqlQuery, "lcValidation") != 1
 	ERROR("Error al validar el responsable.")
@@ -202,21 +201,12 @@ ENDFUNC
 
 *---------------------------------------------------
 
-FUNCTION getConsecutForRQs(lcData, lcDataType, lcColumnName, outErrorMsg) AS STRING &
-lcSqlQuery = "SELECT * FROM CONSECUT WHERE TIPODCTO = 'RQ'"
-TRY
-	MESSAGEBOX('Not implemented.')
-CATCH TO lcException
-	ERROR('Ocurrió un error consultando el consecutivo de requisiciones.')
-	RETURN consecut
-ENDTRY
-ENDFUNC
+FUNCTION saveRQ(lcCodProveedor, gCodUsuario) AS STRING
 
-*---------------------------------------------------
+lcSqlQuery = "EXEC dbo.GuardarRequisicion '" + TRANSFORM(lcCodProveedor) + "', '" + TRANSFORM(gCodUsuario) + "'"
 
-FUNCTION saveRQ(lcData, lcDataType, lcColumnName, outErrorMsg) AS STRING &
-lcSqlQuery = "SELECT * FROM CONSECUT WHERE TIPODCTO = 'RQ'"
-IF SQLEXEC(ON, lcSqlQuery, "C_EMPLEADOS") != 1
-	ERROR("Error al guardar la requisicion.")
+IF SQLEXEC(ON, lcSqlQuery) != 1
+	ERROR("Error al guardar la requisicion en la base de datos (dbo.GuardarRequisicion).")
 ENDIF
+
 ENDFUNC
