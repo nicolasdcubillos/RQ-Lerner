@@ -27,7 +27,7 @@ TRY
 		Precio N(12,2), ;
 		Cantidad N(10,2), ;
 		Sede C(50), ;
-		Librero C(50), ;
+		Responsable N(10,0), ;
 		Estado C(50) ;
 		)
 
@@ -49,25 +49,27 @@ TRY
 	FOR lnRow = 2 TO oSheet.UsedRange.ROWS.COUNT
 		outErrorMsg = ""
 
-		lcCodProveedor = validateLine(oSheet.Cells(lnRow, 1).VALUE, "N", oSheet.Cells(1, 1).VALUE, @outErrorMsg)
-		lcNombreProveedor = validateLine(oSheet.Cells(lnRow, 2).VALUE, "C", oSheet.Cells(1, 2).VALUE, @outErrorMsg)
+		lcCodProveedor = getAndValidateNumericValue(oSheet.Cells(lnRow, 1).VALUE, oSheet.Cells(1, 1).VALUE, @outErrorMsg)
+		lcNombreProveedor = getValue(TRANSFORM(oSheet.Cells(lnRow, 2).VALUE), oSheet.Cells(1, 2).VALUE, @outErrorMsg)
 		
-		lcISBN = validateLine(oSheet.Cells(lnRow, 3).VALUE, "C", oSheet.Cells(1, 3).VALUE, @outErrorMsg)
+		lcISBN = getValue(TRANSFORM(oSheet.Cells(lnRow, 3).VALUE), oSheet.Cells(1, 3).VALUE, @outErrorMsg)
 		validateISBN(lcISBN, @outErrorMsg)
 		
-		lcTitulo = TRANSFORM(oSheet.Cells(lnRow, 4).VALUE)
-		lcAutor = TRANSFORM(oSheet.Cells(lnRow, 5).VALUE)
-		lcEditorial = TRANSFORM(oSheet.Cells(lnRow, 6).VALUE)
-		lcTema = TRANSFORM(oSheet.Cells(lnRow, 7).VALUE)
-		
-		lnPrecio = validateLine(oSheet.Cells(lnRow, 8).VALUE, "N", oSheet.Cells(1, 8).VALUE, @outErrorMsg)
-		lnCantidad = validateLine(oSheet.Cells(lnRow, 9).VALUE, "N", oSheet.Cells(1, 9).VALUE, @outErrorMsg)
+		lcTitulo = getValue(TRANSFORM(oSheet.Cells(lnRow, 4).VALUE), oSheet.Cells(1, 4).VALUE, @outErrorMsg)
+		lcAutor = getValue(TRANSFORM(oSheet.Cells(lnRow, 5).VALUE), oSheet.Cells(1, 5).VALUE, @outErrorMsg)
+		lcEditorial = getValue(TRANSFORM(oSheet.Cells(lnRow, 6).VALUE), oSheet.Cells(1, 6).VALUE, @outErrorMsg)
+		lcTema = getValue(TRANSFORM(oSheet.Cells(lnRow, 7).VALUE), oSheet.Cells(1, 7).VALUE, @outErrorMsg)
+	
+		lnPrecio = getAndValidateNumericValue(oSheet.Cells(lnRow, 8).VALUE, oSheet.Cells(1, 8).VALUE, @outErrorMsg)
+		lnCantidad = getAndValidateNumericValue(oSheet.Cells(lnRow, 9).VALUE, oSheet.Cells(1, 9).VALUE, @outErrorMsg)
 
-		lcSede = validateLine(oSheet.Cells(lnRow, 10).VALUE, "C", oSheet.Cells(1, 10).VALUE, @outErrorMsg)
+		lcSede = getValue(TRANSFORM(oSheet.Cells(lnRow, 10).VALUE), oSheet.Cells(1, 10).VALUE, @outErrorMsg)
 		validateSede(lcSede, @outErrorMsg)
 		
-		lcLibrero = validateLine(oSheet.Cells(lnRow, 11).VALUE, "C", oSheet.Cells(1, 11).VALUE, @outErrorMsg)
-		lcEstado = validateLine(oSheet.Cells(lnRow, 12).VALUE, "C", oSheet.Cells(1, 12).VALUE, @outErrorMsg)
+		lcResponsable = getAndValidateNumericValue(oSheet.Cells(lnRow, 11).VALUE, oSheet.Cells(1, 11).VALUE, @outErrorMsg)
+		validateResponsable(lcResponsable, @outErrorMsg)
+		
+		lcEstado = getValue(oSheet.Cells(lnRow, 12).VALUE, oSheet.Cells(1, 12).VALUE, @outErrorMsg)
 
 		IF EMPTY(outErrorMsg)
 			oSheet.Cells(lcActualRow, lnLastCol).VALUE = ""
@@ -84,7 +86,7 @@ TRY
 				lnPrecio, ;
 				lnCantidad, ;
 				lcSede, ;
-				lcLibrero, ;
+				lcResponsable, ;
 				lcEstado ;
 				)
 
@@ -112,27 +114,41 @@ ENDFUNC
 
 *---------------------------------------------------
 
-FUNCTION validateLine(lcData, lcDataType, lcColumnName, outErrorMsg) AS STRING
+FUNCTION getAndValidateNumericValue(lcData, lcColumnName, outErrorMsg) AS STRING
+	RETURN getValue(lcData, lcColumnName, @outErrorMsg, .T.)
+ENDFUNC
+
+*---------------------------------------------------
+
+FUNCTION getValue(lcData, lcColumnName, outErrorMsg, isNumericValidation) AS STRING
 *!*	    MESSAGEBOX("Datos recibidos:" + CHR(13) + ;
 *!*	                   "lcData: " + TRANSFORM(lcData) + CHR(13) + ;
 *!*	                   "lcTypeReal: " + VARTYPE(lcData) + CHR(13) + ;
-*!*	                   "lcDataType: " + lcDataType + CHR(13) + ;
 *!*	                   "lcColumnName: " + lcColumnName + CHR(13) + ;
 *!*	                   "outErrorMsg antes: " + outErrorMsg)
 
     TRY
-	    IF(VARTYPE(lcData) != lcDataType)
-		    ERROR("Campo con tipo de dato incorrecto: " + lcColumnName + " | ")
+    	IF EMPTY(lcData) OR ISNULL(lcData)
+			ERROR("Campo vacío: " + lcColumnName)
+			RETURN
+        ENDIF        
+    	
+        IF isNumericValidation == .T.
+		    IF(VARTYPE(lcData) != "N")
+		    	ERROR("El campo debe ser numérico: " + lcColumnName)
+		    	RETURN
+			ENDIF
 		ENDIF
 		
-		IF EMPTY(lcData)
-			ERROR("Campo vacío: " + lcColumnName + " | ")
-        ENDIF
     CATCH TO oErr
-        outErrorMsg = outErrorMsg + oErr.Message
+	    buildErrorMessage(@outErrorMsg, oErr.Message)
     ENDTRY
-
-    RETURN lcData
+    
+	IF isNumericValidation == .T.
+		RETURN CAST(lcData AS INTEGER)
+	ELSE
+	    RETURN lcData
+	ENDIF
 ENDFUNC
 
 *---------------------------------------------------
@@ -140,7 +156,7 @@ ENDFUNC
 FUNCTION validateISBN(lcISBN, outErrorMsg)
 LOCAL lcValidation
 
-lcSqlQuery = "SELECT CODIGO FROM MTMERCIA WHERE CODIGO = '" + TRANSFORM(lcISBN) + "'"
+lcSqlQuery = "SELECT CODIGO FROM MTMERCIA WHERE CODIGO = '" + ALLTRIM(TRANSFORM(lcISBN)) + "'"
 
 IF SQLEXEC(ON, lcSqlQuery, "lcValidation") != 1
 	ERROR("Error al validar el ISBN.")
@@ -149,7 +165,7 @@ ENDIF
 SELECT lcValidation
 GO TOP
 IF EOF()
-	outErrorMsg = outErrorMsg + "El ISBN no se encontró en la tabla MTMERCIA. |"
+	buildErrorMessage(@outErrorMsg, "El ISBN no se encontró en la tabla MTMERCIA")
 ENDIF
 
 USE IN SELECT ("lcValidation")
@@ -161,7 +177,7 @@ ENDFUNC
 FUNCTION validateSede(lcSede, outErrorMsg)
 LOCAL lcValidation
 
-lcSqlQuery = "SELECT CODCC FROM CENTCOS WHERE CODCC = '" + TRANSFORM(lcSede) + "'"
+lcSqlQuery = "SELECT CODCC FROM CENTCOS WHERE CODCC = '" + ALLTRIM(TRANSFORM(lcSede)) + "'"
 _CLIPTEXT = lcSqlQuery
 
 IF SQLEXEC(ON, lcSqlQuery, "lcValidation") != 1
@@ -171,7 +187,7 @@ ENDIF
 SELECT lcValidation
 GO TOP
 IF EOF()
-	outErrorMsg = outErrorMsg + "La sede no se encontró en la tabla CENTCOS. |"
+	buildErrorMessage(@outErrorMsg, "La sede no se encontró en la tabla CENTCOS")
 ENDIF
 
 USE IN SELECT ("lcValidation")
@@ -183,7 +199,7 @@ ENDFUNC
 FUNCTION validateResponsable(lcResponsable, outErrorMsg)
 LOCAL lcValidation
 
-lcSqlQuery = "SELECT CODCC FROM MTRESPON WHERE CODCC = '" + TRANSFORM(lcResponsable) + "'"
+lcSqlQuery = "SELECT CODCC FROM MTRESPON WHERE CODCC = '" + ALLTRIM(STR(lcResponsable)) + "'"
 
 IF SQLEXEC(ON, lcSqlQuery, "lcValidation") != 1
 	ERROR("Error al validar el responsable.")
@@ -192,7 +208,7 @@ ENDIF
 SELECT lcValidation
 GO TOP
 IF EOF()
-	outErrorMsg = outErrorMsg + "La sede no se encontró en la tabla MTRESPON. |"
+	buildErrorMessage(@outErrorMsg, "El responsable no se encontró en la tabla MTRESPON")
 ENDIF
 
 USE IN SELECT ("lcValidation")
@@ -201,9 +217,23 @@ ENDFUNC
 
 *---------------------------------------------------
 
-FUNCTION saveRQ(lcCodProveedor, gCodUsuario) AS STRING
+FUNCTION buildErrorMessage(outErrorMsg, newError)
+	outErrorMsg = IIF(!EMPTY(outErrorMsg), outErrorMsg + " | " + newError, newError)	
+ENDFUNC
 
-lcSqlQuery = "EXEC dbo.GuardarRequisicion '" + TRANSFORM(lcCodProveedor) + "', '" + TRANSFORM(gCodUsuario) + "'"
+*---------------------------------------------------
+
+FUNCTION saveRQ(lcCodProveedor, gCodUsuario, lcResponsable, lcSede, lcISBN, lcCantidad, lcPrecio) AS STRING
+lcSqlQuery = "EXEC dbo.GuardarRequisicion '" + ;
+					  TRANSFORM(lcCodProveedor) + ;
+			 "', '" + TRANSFORM(gCodUsuario) + ;
+			 "', '" + TRANSFORM(lcResponsable) + ;
+			 "', '" + TRANSFORM (lcSede) + ;
+			 "', '" + TRANSFORM (lcISBN) + ;
+			 "', '" + TRANSFORM (lcCantidad) + ;
+			 "', '" + TRANSFORM (lcPrecio) ;
+			 + "'"
+_CLIPTEXT = lcSqlQuery
 
 IF SQLEXEC(ON, lcSqlQuery) != 1
 	ERROR("Error al guardar la requisicion en la base de datos (dbo.GuardarRequisicion).")

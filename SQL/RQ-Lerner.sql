@@ -33,9 +33,17 @@ GO
 
 CREATE PROCEDURE dbo.GuardarRequisicion 
 @codProveedor VARCHAR(255),
-@usuario VARCHAR(255)
+@gCodUsuario VARCHAR(255),
+@codResponsable VARCHAR(255),
+@codSede VARCHAR(255),
+@codISBN VARCHAR(255),
+@cantidad VARCHAR(255),
+@precio NUMERIC(12, 2)
 AS
 BEGIN
+	DECLARE @rqConsecut INTEGER;
+	SET @rqConsecut = (SELECT CONSECUT FROM CONSECUT WHERE TIPODCTO = 'RQ');
+
     INSERT INTO 
 	TRADE 
 	(
@@ -46,17 +54,68 @@ BEGIN
 	FECING, 
 	HORA, 
 	NIT, 
+	PASSWORDIN,
+	NITRESP,
+	CODCC) 
+	VALUES 
+	(
+	'COM',				/* Origen */
+	'RQ',				/* Tipodcto */
+	@rqConsecut,		/* Nrodcto */
+	GETDATE(),			/* Fecha */
+	GETDATE(),			/* Fecing */
+	(SELECT CONVERT(VARCHAR(8), GETDATE(), 108)),					/* Hora */
+	(SELECT NIT FROM MTPROCLI WHERE CODALTERNO = @codProveedor),	/* Nit | No es lógico el requerimiento */
+	@gCodUsuario,		/* Passwordin */
+	0,					/* Nitresp | Arreglar, quemado porque no es lógico el requerimiento en el Word */
+	@codSede			/* Codsede */
+	);
+
+	INSERT INTO 
+	MVTRADE 
+	(
+	ORIGEN,			
+	TIPODCTO,		
+	NRODCTO,		
+	FECHA, 
+	FECING,
+	NIT,
+	PRODUCTO,
+	NOMBRE,
+	CANTIDAD,
+	CANTORIG,
+	CODCC,
+	TIPOMVTO,
+	UNDBASE,
+	UNDVENTA,
+	VALORUNIT,
+	VLRVENTA,
 	PASSWORDIN) 
 	VALUES 
 	(
-	'COM', 
-	'RQ', 
-	(SELECT CONSECUT FROM CONSECUT WHERE TIPODCTO = 'RQ'), 
-	GETDATE(), 
-	GETDATE(), 
-	(SELECT CONVERT(VARCHAR(8), GETDATE(), 108)),
-	(SELECT NIT FROM MTPROCLI WHERE CODALTERNO = @codProveedor),
-	@usuario);
+	'COM',				/* Origen */
+	'RQ',				/* Tipodcto */
+	@rqConsecut,		/* Nrodcto */
+	GETDATE(),			/* Fecha */
+	GETDATE(),			/* Fecing */
+	(SELECT NIT FROM MTPROCLI WHERE CODALTERNO = @codProveedor),	/* Nit | No es lógico el requerimiento */
+	@codISBN,			/* Producto */
+	(SELECT DESCRIPCIO FROM MTMERCIA WHERE CODIGO = @codISBN),		/* Nombre */
+	@cantidad,			/* Cantidad */
+	@cantidad,			/* Cantorig */
+	@codSede,			/* Codcc */
+	'0',				/* Tipomvto */
+	(SELECT UNDCONVERS FROM MTMERCIA WHERE CODIGO = @codISBN),		
+	(SELECT UNDCONVERS FROM MTMERCIA WHERE CODIGO = @codISBN),		
+	@precio,			/* Valorunit */
+	@precio,			/* Vlrventa */
+	@gCodUsuario);		/* Passwordin */
 
-	UPDATE CONSECUT SET CONSECUT = CONSECUT + 1 WHERE TIPODCTO = 'RQ'
+	UPDATE CONSECUT SET CONSECUT = CONSECUT + 1 WHERE TIPODCTO = 'RQ';
 END;
+
+GO
+
+/* 
+	EXEC dbo.GuardarRequisicion '99.00', '123', '123.00', '001                                               ', 'SPV739596           ', '2.00', '66000.00'
+*/
