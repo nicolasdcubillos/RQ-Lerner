@@ -69,7 +69,7 @@ TRY
 		lcResponsable = getAndValidateNumericValue(oSheet.Cells(lnRow, 11).VALUE, oSheet.Cells(1, 11).VALUE, @outErrorMsg)
 		validateResponsable(lcResponsable, @outErrorMsg)
 		
-		lcEstado = getValue(oSheet.Cells(lnRow, 12).VALUE, oSheet.Cells(1, 12).VALUE, @outErrorMsg)
+		lcEstado = TRANSFORM(oSheet.Cells(lnRow, 12).VALUE)
 
 		IF EMPTY(outErrorMsg)
 			oSheet.Cells(lcActualRow, lnLastCol).VALUE = ""
