@@ -198,7 +198,6 @@ ENDFUNC
 
 FUNCTION validateResponsable(lcResponsable, outErrorMsg)
 LOCAL lcValidation
-MESSAGEBOX(lcResponsable)
 
 lcSqlQuery = "SELECT CODCC FROM MTRESPON WHERE CODCC = '" + ALLTRIM(STR(lcResponsable)) + "'"
 

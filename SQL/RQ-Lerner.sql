@@ -28,7 +28,8 @@ SELECT * FROM RQ_EXCEL_CONFIG ORDER BY POSITION;
 */
 
 DROP PROCEDURE dbo.GuardarRequisicion;
-
+GO
+DROP FUNCTION [dbo].[RQ_ConsolidadoRequisiciones]
 GO
 
 CREATE PROCEDURE dbo.GuardarRequisicion 
@@ -65,9 +66,9 @@ BEGIN
 	GETDATE(),			/* Fecha */
 	GETDATE(),			/* Fecing */
 	(SELECT CONVERT(VARCHAR(8), GETDATE(), 108)),					/* Hora */
-	(SELECT NIT FROM MTPROCLI WHERE CODALTERNO = @codProveedor),	/* Nit | No es lógico el requerimiento */
+	@codProveedor,		/* Nit */
 	@gCodUsuario,		/* Passwordin */
-	0,					/* Nitresp | Arreglar, quemado porque no es lógico el requerimiento en el Word */
+	@codProveedor,		/* Nitresp */
 	@codSede			/* Codsede */
 	);
 
@@ -98,15 +99,15 @@ BEGIN
 	@rqConsecut,		/* Nrodcto */
 	GETDATE(),			/* Fecha */
 	GETDATE(),			/* Fecing */
-	(SELECT NIT FROM MTPROCLI WHERE CODALTERNO = @codProveedor),	/* Nit | No es lógico el requerimiento */
+	@codProveedor,		/* Nit */
 	@codISBN,			/* Producto */
 	(SELECT DESCRIPCIO FROM MTMERCIA WHERE CODIGO = @codISBN),		/* Nombre */
 	@cantidad,			/* Cantidad */
 	@cantidad,			/* Cantorig */
 	@codSede,			/* Codcc */
 	'0',				/* Tipomvto */
-	(SELECT UNDCONVERS FROM MTMERCIA WHERE CODIGO = @codISBN),		
-	(SELECT UNDCONVERS FROM MTMERCIA WHERE CODIGO = @codISBN),		
+	(SELECT UNIDADMED FROM MTMERCIA WHERE CODIGO = @codISBN),		/* Undbase */
+	(SELECT UNIDADMED FROM MTMERCIA WHERE CODIGO = @codISBN),		/* Undventa */
 	@precio,			/* Valorunit */
 	@precio,			/* Vlrventa */
 	@gCodUsuario);		/* Passwordin */
@@ -114,8 +115,44 @@ BEGIN
 	UPDATE CONSECUT SET CONSECUT = CONSECUT + 1 WHERE TIPODCTO = 'RQ';
 END;
 
+/* 
+	EXEC dbo.GuardarRequisicion '99.00', '123', '123.00', '001', 'SPV739596           ', '2.00', '66000.00'
+*/
+
 GO
 
-/* 
-	EXEC dbo.GuardarRequisicion '99.00', '123', '123.00', '001                                               ', 'SPV739596           ', '2.00', '66000.00'
-*/
+CREATE FUNCTION [dbo].[RQ_ConsolidadoRequisiciones]
+(
+	@fecha1 date,
+	@fecha2 date
+)
+Returns Table
+AS
+Return
+(
+	SELECT 
+	1 AS CHECKENVIAR,
+	TRADE.FECING,
+	TRADE.TIPODCTO,
+	TRADE.NRODCTO,
+	MVTRADE.PRODUCTO,
+	MVTRADE.NOMBRE,
+	TRADE.CODCC,
+	TRADE.NIT AS RESPONSABLE,
+	MVTRADE.CANTIDAD
+	FROM
+	TRADE,
+	MVTRADE,
+	TIPODCTO,
+	FNVOF_REPORTECATALOGO(YEAR(@fecha2), MONTH(@fecha2)) AS RCATALOGO
+	WHERE
+	TIPODCTO.DCTOMAE = 'RQ' AND
+	TIPODCTO.TIPODCTO = 'RQ' AND
+	TRADE.NRODCTO = MVTRADE.NRODCTO AND
+	TRADE.TIPODCTO = MVTRADE.TIPODCTO AND
+	TRADE.ORIGEN = MVTRADE.ORIGEN AND
+	RCATALOGO.PRODUCTO = MVTRADE.PRODUCTO AND
+	TRADE.FECING BETWEEN @fecha1 AND @fecha2
+)
+
+/* SELECT * FROM RQ_ConsolidadoRequisiciones('20240615', '20240617') */
