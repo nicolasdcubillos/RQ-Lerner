@@ -43,7 +43,7 @@ CREATE PROCEDURE dbo.GuardarRequisicion
 AS
 BEGIN
 	DECLARE @rqConsecut INTEGER;
-	SET @rqConsecut = (SELECT CONSECUT FROM CONSECUT WHERE TIPODCTO = 'RQ');
+	SET @rqConsecut = (SELECT CONSECUT FROM CONSECUT WHERE TIPODCTO = 'RQ') + 1;
 
     INSERT INTO 
 	TRADE 
@@ -66,9 +66,9 @@ BEGIN
 	GETDATE(),			/* Fecha */
 	GETDATE(),			/* Fecing */
 	(SELECT CONVERT(VARCHAR(8), GETDATE(), 108)),					/* Hora */
-	@codProveedor,		/* Nit */
+	(SELECT NIT FROM MTPROCLI WHERE CAST(DETALLE AS VARCHAR(255)) = @codProveedor),		/* Nit */
 	@gCodUsuario,		/* Passwordin */
-	@codProveedor,		/* Nitresp */
+	@codResponsable,	/* Nitresp */
 	@codSede			/* Codsede */
 	);
 
@@ -99,7 +99,7 @@ BEGIN
 	@rqConsecut,		/* Nrodcto */
 	GETDATE(),			/* Fecha */
 	GETDATE(),			/* Fecing */
-	@codProveedor,		/* Nit */
+	(SELECT NIT FROM MTPROCLI WHERE CAST(DETALLE AS VARCHAR(255)) = @codProveedor),		/* Nit */
 	@codISBN,			/* Producto */
 	(SELECT DESCRIPCIO FROM MTMERCIA WHERE CODIGO = @codISBN),		/* Nombre */
 	@cantidad,			/* Cantidad */
@@ -155,9 +155,9 @@ Return
 	TRADE.FECING BETWEEN @fecha1 AND @fecha2
 )
 
-/* SELECT * FROM RQ_ConsolidadoRequisiciones('20240615', '20240617') */
+/* SELECT * FROM RQ_ConsolidadoRequisiciones('20240615', '20240617') 
 
 
 EXEC dbo.GuardarRequisicion '99', '123', '123', '001                                               ', 'SPV739596           ', '5', '12000'
 
-
+*/

@@ -62,6 +62,7 @@ TRY
 		outErrorMsg = ""
 
 		lcCodProveedor = getAndValidateNumericValue(oSheet.Cells(lnRow, 1).VALUE, oSheet.Cells(1, 1).VALUE, @outErrorMsg)
+		validateCodProveedor(lcCodProveedor, @outErrorMsg)
 		
 		lcNombreProveedor = getValue(TRANSFORM(oSheet.Cells(lnRow, 2).VALUE), oSheet.Cells(1, 2).VALUE, @outErrorMsg)
 		
@@ -176,6 +177,28 @@ ENDFUNC
 
 *---------------------------------------------------
 
+FUNCTION validateCodProveedor(lcCodProveedor, outErrorMsg)
+LOCAL lcValidation
+
+lcSqlQuery = "SELECT DETALLE FROM MTPROCLI WHERE CAST(DETALLE AS VARCHAR(255)) = '" + ALLTRIM(TRANSFORM(lcCodProveedor)) + "'"
+
+IF SQLEXEC(ON, lcSqlQuery, "lcValidation") != 1
+	_CLIPTEXT = lcSqlQuery
+	ERROR("Error al validar el código del proveedor.")
+ENDIF
+
+SELECT lcValidation
+GO TOP
+IF EOF()
+	buildErrorMessage(@outErrorMsg, "El código del proveedor no se encontró en la tabla MTPROCLI")
+ENDIF
+
+USE IN SELECT ("lcValidation")
+
+ENDFUNC
+
+*---------------------------------------------------
+
 FUNCTION validateISBN(lcISBN, outErrorMsg)
 LOCAL lcValidation
 
@@ -248,12 +271,12 @@ ENDFUNC
 
 *---------------------------------------------------
 
-FUNCTION saveRQ(lcCodProveedor, gCodUsuario, lcResponsable, lcSede, lcISBN, lcCantidad, lcPrecio) AS STRING
+FUNCTION saveRQ(lcCodProveedor, gCodUsuario, lcCodResponsable, lcCodSede, lcISBN, lcCantidad, lcPrecio) AS STRING
 lcSqlQuery = "EXEC dbo.GuardarRequisicion '" + ;
 					  TRANSFORM(lcCodProveedor) + ;
 			 "', '" + TRANSFORM(gCodUsuario) + ;
-			 "', '" + TRANSFORM(lcResponsable) + ;
-			 "', '" + TRANSFORM(lcSede) + ;
+			 "', '" + TRANSFORM(lcCodResponsable) + ;
+			 "', '" + TRANSFORM(lcCodSede) + ;
 			 "', '" + TRANSFORM(lcISBN) + ;
 			 "', '" + TRANSFORM(lcCantidad) + ;
 			 "', '" + TRANSFORM(lcPrecio) ;
