@@ -1,4 +1,4 @@
-USE AJOVECO_NE;
+USE LERNER;
 
 /*DROP TABLE RQ_EXCEL_CONFIG;*/
 
@@ -156,3 +156,8 @@ Return
 )
 
 /* SELECT * FROM RQ_ConsolidadoRequisiciones('20240615', '20240617') */
+
+
+EXEC dbo.GuardarRequisicion '99', '123', '123', '001                                               ', 'SPV739596           ', '5', '12000'
+
+
