@@ -299,4 +299,3 @@ GO
 	SELECT * FROM RQ_ConsolidadoRequisiciones('20240615', '20240626')  ORDER BY NRODCTO
 	EXEC dbo.RQ_SaldoInventarioProducto '20240615', '20240626'
 */
-
