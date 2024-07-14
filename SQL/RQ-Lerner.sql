@@ -1,5 +1,17 @@
 USE LERNER;
 
+IF NOT EXISTS (
+    SELECT 1
+    FROM INFORMATION_SCHEMA.COLUMNS 
+    WHERE TABLE_NAME = 'MVTRADE' 
+    AND COLUMN_NAME = 'RQ_CANTIDAD_FINAL'
+)
+BEGIN
+    ALTER TABLE MVTRADE
+    ADD RQ_CANTIDAD_FINAL NUMERIC;
+END;
+
+
 /*DROP TABLE RQ_EXCEL_CONFIG;*/
 
 /*
@@ -87,6 +99,7 @@ BEGIN
 	NOMBRE,
 	CANTIDAD,
 	CANTORIG,
+	RQ_CANTIDAD_FINAL,
 	CODCC,
 	TIPOMVTO,
 	UNDBASE,
@@ -106,6 +119,7 @@ BEGIN
 	(SELECT DESCRIPCIO FROM MTMERCIA WHERE CODIGO = @codISBN),		/* Nombre */
 	@cantidad,			/* Cantidad */
 	@cantidad,			/* Cantorig */
+	@cantidad,			/* RQ_Cantidad_Final */
 	@codSede,			/* Codcc */
 	'0',				/* Tipomvto */
 	(SELECT UNIDADMED FROM MTMERCIA WHERE CODIGO = @codISBN),		/* Undbase */
@@ -134,7 +148,7 @@ Return
 (
 	SELECT 
 	1 AS CHECKENVIAR,
-	TRADE.FECING,
+	CONVERT(VARCHAR, TRADE.FECING, 23) AS FECING,
 	TRADE.TIPODCTO,
 	TRADE.NRODCTO,
 	MVTRADE.PRODUCTO,
@@ -142,7 +156,7 @@ Return
 	TRADE.CODCC,
 	TRADE.NIT AS RESPONSABLE,
 	CAST(MVTRADE.CANTIDAD AS INTEGER) AS CANTIDAD,
-	CAST(MVTRADE.CANTIDAD AS INTEGER) AS CANTIDAD_FINAL
+	CAST(MVTRADE.RQ_CANTIDAD_FINAL AS INTEGER) AS CANTIDAD_FINAL
 	FROM
 	TRADE,
 	MVTRADE,
@@ -157,7 +171,6 @@ Return
 )
 
 /* 
-
 	EXEC dbo.GuardarRequisicion '99', '123', '123', '001                                               ', 'SPV739596           ', '5', '12000'
 	SELECT * FROM RQ_ConsolidadoRequisiciones('20240615', '20240626') 
 */
@@ -245,7 +258,7 @@ BEGIN
             Requisiciones.NRODCTO,
             Requisiciones.PRODUCTO,
             UBIC.GRUPO,
-            COALESCE(SUM(ISNULL(RCATALOGO.SALDO, 0)), 0) AS SALDO
+            COALESCE(CAST(SUM(ISNULL(RCATALOGO.SALDO, 0)) AS INT), 0) AS SALDO
         FROM 
             (SELECT DISTINCT TIPODCTO, NRODCTO, PRODUCTO 
              FROM RQ_ConsolidadoRequisiciones(''' + CONVERT(NVARCHAR, @fecha1, 112) + ''', ''' + CONVERT(NVARCHAR, @fecha2, 112) + ''')
@@ -267,14 +280,21 @@ BEGIN
         FOR GRUPO IN (' + @columns + N')
     ) AS PivotTable';
 
+    -- Wrap the PIVOT result to replace NULLs with empty string
+    SET @sql = N'
+    SELECT ' + @columns + ',
+           ISNULL(TIPODCTO, '''') AS TIPODCTO, 
+           ISNULL(NRODCTO, '''') AS NRODCTO, 
+           ISNULL(PRODUCTO, '''') AS PRODUCTO
+    FROM (' + @sql + N') AS Pivoted';
+
     -- Execute the dynamic SQL query
     EXEC sp_executesql @sql;
 END;
 GO
 
-
-
 /*
 	SELECT * FROM RQ_ConsolidadoRequisiciones('20240615', '20240626')  ORDER BY NRODCTO
 	EXEC dbo.RQ_SaldoInventarioProducto '20240615', '20240626'
 */
+

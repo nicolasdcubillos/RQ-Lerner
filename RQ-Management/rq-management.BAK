@@ -18,7 +18,7 @@ lcSqlQuery = "UPDATE MVTRADE SET RQ_CANTIDAD_FINAL = " + TRANSFORM(lcCantidadFin
 _CLIPTEXT = lcSqlQuery
 
 IF SQLEXEC(ON, lcSqlQuery) != 1
-	ERROR("Error al actualizar la cantidad final para el documento " + ALLTRIM(TRANSFORM(lcTipoDcto)) + ALLTRIM(TRANSFORM(lcNroDcto)) + ".")
+	ERROR("Error al actualizar la cantidad final para el documento " + ALLTRIM(TRANSFORM(TIPODCTO)) + ALLTRIM(TRANSFORM(NRODCTO)) + ".")
 ENDIF
 
 ENDFUNC
