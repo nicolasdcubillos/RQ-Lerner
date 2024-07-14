@@ -100,6 +100,7 @@ BEGIN
 	CANTIDAD,
 	CANTORIG,
 	RQ_CANTIDAD_FINAL,
+	CANVENTA,
 	CODCC,
 	TIPOMVTO,
 	UNDBASE,
@@ -120,6 +121,7 @@ BEGIN
 	@cantidad,			/* Cantidad */
 	@cantidad,			/* Cantorig */
 	@cantidad,			/* RQ_Cantidad_Final */
+	@cantidad,			/* Canventa */
 	@codSede,			/* Codcc */
 	'0',				/* Tipomvto */
 	(SELECT UNIDADMED FROM MTMERCIA WHERE CODIGO = @codISBN),		/* Undbase */
