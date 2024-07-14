@@ -230,7 +230,7 @@ ENDFUNC
 FUNCTION validateSede(lcCodSede, outErrorMsg)
 LOCAL lcValidation
 
-lcSqlQuery = "SELECT CODCC FROM CENTCOS WHERE CODCC = '" + ALLTRIM(TRANSFORM(lcCodSede)) + "'"
+lcSqlQuery = "SELECT CODCC FROM CENTCOS WHERE CODCC = '" + ALLTRIM(TRANSFORM(lcCodSede)) + "' AND AUXILIAR = 1"
 
 IF SQLEXEC(ON, lcSqlQuery, "lcValidation") != 1
 	_CLIPTEXT = lcSqlQuery
@@ -240,7 +240,7 @@ ENDIF
 SELECT lcValidation
 GO TOP
 IF EOF()
-	buildErrorMessage(@outErrorMsg, "La sede no se encontró en la tabla CENTCOS")
+	buildErrorMessage(@outErrorMsg, "La sede no se encontró en la tabla CENTCOS o no es auxiliar")
 ENDIF
 
 USE IN SELECT ("lcValidation")
