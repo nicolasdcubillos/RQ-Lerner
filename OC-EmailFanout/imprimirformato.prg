@@ -756,7 +756,6 @@ mStrSql = " Select  M.* ,U.UNidad As CodUnidad,U.Nombre As NombreUnidad,M.ValorU
 
 			If Not Empty(mArchivoPDF)
 				mEmailDestino = ObtenerEmail(pNit)
-				getOtherEmails(pNit)
 				*mEmailDestino = ObtenerEmail(curEncabezado.Nit)
 				*mEmailDestino="ofima@ofima.com"
 
