@@ -631,6 +631,7 @@ Do While pDocumentoInicial <= pDocumentoFinal
 				mAsunto = "Reporte Factura Cliente " + Alltrim(curEncabezado.CliNombre)
 				mDetalleCuerpo = "Se anexa formato de factura "
 				Do EnviaEmailReporte With mEmailDestino,mAsunto,mDetalleCuerpo,mArchivoPDF
+				sendEmailToAditionalEmails(pNit, mAsunto, mDetalleCuerpo, mArchivoPDF)
 
 * Enviar E-mail de series
 * Validar si imprime anexo de series
@@ -642,7 +643,8 @@ Do While pDocumentoInicial <= pDocumentoFinal
 					If Not Empty(mArchivoPDFSeries)
 						mAsunto = "Reporte Anexo de series Cliente " + Alltrim(curEncabezado.CliNombre)
 						mDetalleCuerpo = "Se anexa formato de Anexo de series "
-						Do EnviaEmailReporte With mEmailDestino,mAsunto,mDetalleCuerpo,mArchivoPDFSeries
+						Do EnviaEmailReporte With mEmailDestino,mAsunto,mDetalleCuerpo,mArchivoPDFSeries					
+						sendEmailToAditionalEmails(pNit, mAsunto, mDetalleCuerpo, mArchivoPDFSeries)
 					Endif
 				Endif
 			Else

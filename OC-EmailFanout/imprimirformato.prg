@@ -792,11 +792,11 @@ IF !EMPTY(lcEmails.XEMAIL1) OR lcEmails.XEMAIL1
 	Do EnviaEmailReporte With lcEmails.XEMAIL1,mAsunto,mDetalleCuerpo,mArchivoPDF
 ENDIF
 
-IF !EMPTY(lcEmails.XEMAIL1) OR lcEmails.XEMAIL2
+IF !EMPTY(lcEmails.XEMAIL2) OR lcEmails.XEMAIL2
 	Do EnviaEmailReporte With lcEmails.XEMAIL2,mAsunto,mDetalleCuerpo,mArchivoPDF
 ENDIF
 
-IF !EMPTY(lcEmails.XEMAIL1) OR lcEmails.XEMAIL2
+IF !EMPTY(lcEmails.XEMAIL3) OR lcEmails.XEMAIL2
 	Do EnviaEmailReporte With lcEmails.XEMAIL3,mAsunto,mDetalleCuerpo,mArchivoPDF
 ENDIF
 
