@@ -39,25 +39,24 @@ INSERT INTO RQ_EXCEL_CONFIG (COLUMN_NAME, EXCLUDE_VALIDATIONS, DATA_TYPE, POSITI
 SELECT * FROM RQ_EXCEL_CONFIG ORDER BY POSITION;
 */
 
-DROP PROCEDURE dbo.GuardarRequisicion;
+DROP PROCEDURE dbo.GuardarTradeRequisicion;
+GO
+DROP PROCEDURE dbo.GuardarMvTradeRequisicion;
 GO
 DROP PROCEDURE dbo.RQ_SaldoInventarioProducto;
 GO
 DROP FUNCTION [dbo].[RQ_ConsolidadoRequisiciones]
 GO
 
-CREATE PROCEDURE dbo.GuardarRequisicion 
+CREATE PROCEDURE dbo.GuardarTradeRequisicion 
 @codProveedor VARCHAR(255),
 @gCodUsuario VARCHAR(255),
 @codResponsable VARCHAR(255),
 @codSede VARCHAR(255),
 @codISBN VARCHAR(255),
-@cantidad VARCHAR(255),
-@precio NUMERIC(12, 2)
+@rqConsecut INTEGER
 AS
 BEGIN
-	DECLARE @rqConsecut INTEGER;
-	SET @rqConsecut = (SELECT CONSECUT FROM CONSECUT WHERE TIPODCTO = 'RQ') + 1;
 
     INSERT INTO 
 	TRADE 
@@ -84,9 +83,27 @@ BEGIN
 	@gCodUsuario,		/* Passwordin */
 	@codResponsable,	/* Nitresp */
 	@codSede			/* Codsede */
-	);
+	);	
+END;
 
-	INSERT INTO 
+/* 
+	EXEC dbo.GuardarRequisicion '99.00', '123', '123.00', '001', 'SPV739596           ', '2.00', '66000.00'
+*/
+
+GO
+
+CREATE PROCEDURE dbo.GuardarMvTradeRequisicion
+@codProveedor VARCHAR(255),
+@gCodUsuario VARCHAR(255),
+@codSede VARCHAR(255),
+@codISBN VARCHAR(255),
+@cantidad VARCHAR(255),
+@precio NUMERIC(12, 2),
+@rqConsecut INTEGER
+AS
+BEGIN
+
+    INSERT INTO 
 	MVTRADE 
 	(
 	ORIGEN,			
@@ -130,12 +147,7 @@ BEGIN
 	@precio,			/* Vlrventa */
 	@gCodUsuario);		/* Passwordin */
 
-	UPDATE CONSECUT SET CONSECUT = CONSECUT + 1 WHERE TIPODCTO = 'RQ';
 END;
-
-/* 
-	EXEC dbo.GuardarRequisicion '99.00', '123', '123.00', '001', 'SPV739596           ', '2.00', '66000.00'
-*/
 
 GO
 
@@ -172,6 +184,8 @@ Return
 	TRADE.FECING BETWEEN @fecha1 AND DATEADD(DAY, 1, @fecha2)
 )
 
+
+
 /* 
 	EXEC dbo.GuardarRequisicion '99', '123', '123', '001                                               ', 'SPV739596           ', '5', '12000'
 	SELECT * FROM RQ_ConsolidadoRequisiciones('20240615', '20240626') 
@@ -195,7 +209,7 @@ WHERE
 SIGLA NOT LIKE '%APLICA%'
 GROUP BY 
 SIGLA;
-
+SELECT * FROM TEMP_UBICACIONES;
 SELECT SIGLA FROM TEMP_UBICACIONES WHERE CODIGO = 'CA1'
 
 

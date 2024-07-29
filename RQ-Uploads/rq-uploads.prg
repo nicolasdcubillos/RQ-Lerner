@@ -11,50 +11,53 @@
 */
 
 *---------------------------------------------------
-FUNCTION uploadFile(lcFileName, outRqData)
 
+FUNCTION uploadFile(lcFileName, outRqData)
+rqTipoDctoMae = "RQ"
 LOCAL outErrorMsg
 TRY
-
 	lcLinesWithErrors = 0
 
-	* Abriendo el archivo de Excel
+* Abriendo el archivo de Excel
 	oExcel = CREATEOBJECT("Excel.Application")
 	oWorkbook = oExcel.Workbooks.OPEN(lcFileName)
-	oExcel.Visible = .T.
+	oExcel.VISIBLE = .T.
 &&	oWorkbook.READONLY = .F.
 	oSheet = oWorkbook.Sheets(1)
-	
-	* Validaciones del formato 
-	lcColumnsCountShouldBe = 14
-	IF oSheet.UsedRange.COLUMNS.COUNT != lcColumnsCountShouldBe 
+
+* Validaciones del formato
+	lcColumnsCountShouldBe = 12
+	IF oSheet.UsedRange.COLUMNS.COUNT != lcColumnsCountShouldBe
 		errMsg = "El formato del archivo Excel seleccionado es incorrecto. Debe contener " + ;
-		 			ALLTRIM(STR(lcColumnsCountShouldBe)) + " columnas y contiene " + ALLTRIM(STR(oSheet.UsedRange.COLUMNS.COUNT)) + "."
-		ERROR(errMsg) 
+			ALLTRIM(STR(lcColumnsCountShouldBe)) + " columnas y contiene " + ALLTRIM(STR(oSheet.UsedRange.COLUMNS.COUNT)) + "."
+		ERROR(errMsg)
 	ENDIF
 
 	lcActualRow = 1
 	outErrorMsg = ""
-	lcStartRow = 3
+	lcStartRow = 5
 	lnLastCol = oSheet.UsedRange.COLUMNS.COUNT + 1
 	oSheet.Cells(lcStartRow - 1, lnLastCol).VALUE = "Detalle del error"
-	oSheet.Cells(lcStartRow - 1, lnLastCol).Font.Bold = .T.
-	
+	oSheet.Cells(lcStartRow - 1, lnLastCol).FONT.Bold = .T.
+
+	lcResponsable = getValueWithoutValidate(oSheet.Cells(2, 5).VALUE, oSheet.Cells(2, 4).VALUE, @outErrorMsg)
+
+	lcCodResponsable = getValue(TRANSFORM(oSheet.Cells(3, 5).VALUE), oSheet.Cells(3, 4).VALUE, @outErrorMsg)
+	validateResponsable(lcCodResponsable, @outErrorMsg)
+
 	CREATE CURSOR outRqData( ;
 		Cargar N(1, 0), ;
 		CodProveedor C(50), ;
 		NombreProveedor C(50), ;
 		ISBN C(20), ;
 		Titulo C(100), ;
-		Autor C(50), ;
+		AUTOR C(50), ;
 		Editorial C(50), ;
 		Tema C(50), ;
 		Precio N(12,2), ;
 		Cantidad N(10,2), ;
 		CodSede C(50), ;
 		Sede C(50), ;
-		CodResponsable C(50), ;
-		Responsable C(50), ;
 		Estado C(50) ;
 		)
 
@@ -63,35 +66,35 @@ TRY
 
 		lcCodProveedor = getValue(TRANSFORM(oSheet.Cells(lnRow, 1).VALUE), oSheet.Cells(1, 1).VALUE, @outErrorMsg)
 		validateCodProveedor(lcCodProveedor, @outErrorMsg)
-		
+
 		lcNombreProveedor = getValue(TRANSFORM(oSheet.Cells(lnRow, 2).VALUE), oSheet.Cells(1, 2).VALUE, @outErrorMsg)
-		
+
 		lcISBN = getValue(TRANSFORM(oSheet.Cells(lnRow, 3).VALUE), oSheet.Cells(1, 3).VALUE, @outErrorMsg)
 		validateISBN(lcISBN, @outErrorMsg)
-		
+
 		lcTitulo = getValue(TRANSFORM(oSheet.Cells(lnRow, 4).VALUE), oSheet.Cells(1, 4).VALUE, @outErrorMsg)
-		
+
 		lcAutor = getValue(TRANSFORM(oSheet.Cells(lnRow, 5).VALUE), oSheet.Cells(1, 5).VALUE, @outErrorMsg)
-		
+
 		lcEditorial = getValue(TRANSFORM(oSheet.Cells(lnRow, 6).VALUE), oSheet.Cells(1, 6).VALUE, @outErrorMsg)
-		
+
 		lcTema = getValue(TRANSFORM(oSheet.Cells(lnRow, 7).VALUE), oSheet.Cells(1, 7).VALUE, @outErrorMsg)
-		
+
 		lnPrecio = getAndValidateNumericValue(oSheet.Cells(lnRow, 8).VALUE, oSheet.Cells(1, 8).VALUE, @outErrorMsg)
-		
+
 		lnCantidad = getAndValidateNumericValue(oSheet.Cells(lnRow, 9).VALUE, oSheet.Cells(1, 9).VALUE, @outErrorMsg)
 
 		lcCodSede = getValue(TRANSFORM(oSheet.Cells(lnRow, 10).VALUE), oSheet.Cells(1, 10).VALUE, @outErrorMsg)
 		validateSede(lcCodSede, @outErrorMsg)
-		
+
 		lcSede = getValueWithoutValidate(oSheet.Cells(lnRow, 11).VALUE, oSheet.Cells(1, 11).VALUE, @outErrorMsg)
-		
-		lcCodResponsable = getValue(TRANSFORM(oSheet.Cells(lnRow, 12).VALUE), oSheet.Cells(1, 12).VALUE, @outErrorMsg)
-		validateResponsable(lcCodResponsable, @outErrorMsg)
-		
-		lcResponsable = getValueWithoutValidate(oSheet.Cells(lnRow, 13).VALUE, oSheet.Cells(1, 13).VALUE, @outErrorMsg)
-		
-		lcEstado = getValueWithoutValidate(oSheet.Cells(lnRow, 14).VALUE, oSheet.Cells(1, 14).VALUE, @outErrorMsg)
+
+&&lcCodResponsable = getValue(TRANSFORM(oSheet.Cells(lnRow, 12).VALUE), oSheet.Cells(1, 12).VALUE, @outErrorMsg)
+&&validateResponsable(lcCodResponsable, @outErrorMsg)
+
+&&lcResponsable = getValueWithoutValidate(oSheet.Cells(lnRow, 13).VALUE, oSheet.Cells(1, 13).VALUE, @outErrorMsg)
+
+		lcEstado = getValueWithoutValidate(oSheet.Cells(lnRow, 12).VALUE, oSheet.Cells(1, 12).VALUE, @outErrorMsg)
 
 		IF EMPTY(outErrorMsg)
 			oSheet.Cells(lcActualRow, lnLastCol).VALUE = ""
@@ -109,8 +112,6 @@ TRY
 				lnCantidad, ;
 				lcCodSede, ;
 				lcSede, ;
-				lcCodResponsable, ;
-				lcResponsable, ;
 				lcEstado ;
 				)
 
@@ -119,19 +120,19 @@ TRY
 			oSheet.Cells(lnRow, lnLastCol).VALUE = outErrorMsg
 		ENDIF
 	NEXT
-	
+
 	IF lcLinesWithErrors > 0
 		lcErrorMessage = "Algunas filas en el archivo contienen errores de validación." + CHR(13) + CHR(13) + "Revise el archivo Excel que se ha abierto para ver los detalles del error."
 		ERROR(lcErrorMessage)
 	ELSE
 		MESSAGEBOX ('Requisiciones cargadas correctamente desde el archivo.', 64)
 	ENDIF
-	
+
 	oWorkbook.CLOSE(.F.)
 	oExcel.QUIT()
-	
+
 	RELEASE oSheet, oWorkbook, oExcel
-	
+
 ENDTRY
 
 ENDFUNC
@@ -139,13 +140,13 @@ ENDFUNC
 *---------------------------------------------------
 
 FUNCTION getValueWithoutValidate(lcData, lcColumnName, outErrorMsg) AS STRING
-	RETURN IIF(ISNULL(lcData), "", TRANSFORM(lcData))
+RETURN IIF(ISNULL(lcData), "", TRANSFORM(lcData))
 ENDFUNC
 
 *---------------------------------------------------
 
 FUNCTION getAndValidateNumericValue(lcData, lcColumnName, outErrorMsg) AS STRING
-	RETURN getValue(lcData, lcColumnName, @outErrorMsg, .T.)
+RETURN getValue(lcData, lcColumnName, @outErrorMsg, .T.)
 ENDFUNC
 
 *---------------------------------------------------
@@ -157,28 +158,28 @@ FUNCTION getValue(lcData, lcColumnName, outErrorMsg, isNumericValidation) AS STR
 *!*	                   "lcColumnName: " + lcColumnName + CHR(13) + ;
 *!*	                   "outErrorMsg antes: " + outErrorMsg)
 
-    TRY
-    	IF EMPTY(lcData) OR ISNULL(lcData)
-			ERROR("Campo vacío: " + lcColumnName)
-			RETURN
-        ENDIF        
-    	
-        IF isNumericValidation == .T.
-		    IF(VARTYPE(lcData) != "N")
-		    	ERROR("El campo debe ser numérico: " + lcColumnName)
-		    	RETURN
-			ENDIF
-		ENDIF
-		
-    CATCH TO oErr
-	    buildErrorMessage(@outErrorMsg, oErr.Message)
-    ENDTRY
-    
-	IF isNumericValidation == .T.
-		RETURN CAST(lcData AS INTEGER)
-	ELSE
-	    RETURN lcData
+TRY
+	IF EMPTY(lcData) OR ISNULL(lcData)
+		ERROR("Campo vacío: " + lcColumnName)
+		RETURN
 	ENDIF
+
+	IF isNumericValidation == .T.
+		IF(VARTYPE(lcData) != "N")
+			ERROR("El campo debe ser numérico: " + lcColumnName)
+			RETURN
+		ENDIF
+	ENDIF
+
+CATCH TO oErr
+	buildErrorMessage(@outErrorMsg, oErr.MESSAGE)
+ENDTRY
+
+IF isNumericValidation == .T.
+	RETURN CAST(lcData AS INTEGER)
+ELSE
+	RETURN lcData
+ENDIF
 ENDFUNC
 
 *---------------------------------------------------
@@ -272,25 +273,116 @@ ENDFUNC
 *---------------------------------------------------
 
 FUNCTION buildErrorMessage(outErrorMsg, newError)
-	outErrorMsg = IIF(!EMPTY(outErrorMsg), outErrorMsg + " | " + newError, newError)	
+outErrorMsg = IIF(!EMPTY(outErrorMsg), outErrorMsg + " | " + newError, newError)
 ENDFUNC
 
 *---------------------------------------------------
 
-FUNCTION saveRQ(lcCodProveedor, gCodUsuario, lcCodResponsable, lcCodSede, lcISBN, lcCantidad, lcPrecio) AS STRING
-lcSqlQuery = "EXEC dbo.GuardarRequisicion '" + ;
-					  TRANSFORM(lcCodProveedor) + ;
-			 "', '" + TRANSFORM(gCodUsuario) + ;
-			 "', '" + TRANSFORM(lcCodResponsable) + ;
-			 "', '" + TRANSFORM(lcCodSede) + ;
-			 "', '" + TRANSFORM(lcISBN) + ;
-			 "', '" + TRANSFORM(lcCantidad) + ;
-			 "', '" + TRANSFORM(lcPrecio) ;
-			 + "'"
+FUNCTION saveRQ() AS STRING
+rqConsecutAssigned = getRQConsecut()
+MESSAGEBOX(rqConsecutAssigned)
+
+saveTrade(outRqData.CodProveedor, ;
+		gCodUsuario, ;
+		lcCodResponsable, ;
+		outRqData.CodSede, ;
+		outRqData.ISBN, ;
+		rqConsecutAssigned)
+		
+SELECT outRqData
+GO TOP
+SCAN
+	saveMvTrade(outRqData.CodProveedor, ;
+		gCodUsuario, ;
+		outRqData.CodSede, ;
+		outRqData.ISBN, ;
+		outRqData.Cantidad, ;
+		outRqData.Precio, ;
+		rqConsecutAssigned)
+ENDSCAN
+updateRQConsecut()
+ENDFUNC
+
+*---------------------------------------------------
+
+FUNCTION saveMvTrade(lcCodProveedor, gCodUsuario, lcCodSede, lcISBN, lcCantidad, lcPrecio, rqConsecutAssigned) AS STRING
+
+lcSqlQuery = "EXEC dbo.GuardarMvTradeRequisicion '" + ;
+			 TRANSFORM(lcCodProveedor) + ;
+	"', '" + TRANSFORM(gCodUsuario) + ;
+	"', '" + TRANSFORM(lcCodSede) + ;
+	"', '" + TRANSFORM(lcISBN) + ;
+	"', '" + TRANSFORM(lcCantidad) + ;
+	"', '" + TRANSFORM(lcPrecio) + ;
+	"', '" + TRANSFORM(rqConsecutAssigned) ;
+	+ "'"
 
 IF SQLEXEC(ON, lcSqlQuery) != 1
 	_CLIPTEXT = lcSqlQuery
-	ERROR("Error al guardar la requisicion en la base de datos (dbo.GuardarRequisicion).")
+	ERROR("Error al guardar la requisicion en la base de datos (dbo.GuardarMvTradeRequisicion).")
 ENDIF
 
 ENDFUNC
+
+*---------------------------------------------------
+
+FUNCTION saveTrade(lcCodProveedor, gCodUsuario, lcCodResponsable, lcCodSede, lcISBN, rqConsecutAssigned) AS STRING
+
+lcSqlQuery = "EXEC dbo.GuardarTradeRequisicion '" + ;
+			 TRANSFORM(lcCodProveedor) + ;
+	"', '" + TRANSFORM(gCodUsuario) + ;
+	"', '" + TRANSFORM(lcCodResponsable) + ;
+	"', '" + TRANSFORM(lcCodSede) + ;
+	"', '" + TRANSFORM(lcISBN) + ;
+	"', '" + TRANSFORM(rqConsecutAssigned) ;
+	+ "'"
+
+IF SQLEXEC(ON, lcSqlQuery) != 1
+	_CLIPTEXT = lcSqlQuery
+	ERROR("Error al guardar la requisicion en la base de datos (dbo.GuardarTradeRequisicion).")
+ENDIF
+
+ENDFUNC
+
+*---------------------------------------------------
+
+FUNCTION getRQConsecut() AS INTEGER
+LOCAL lcValidation
+
+lcSqlQuery = "SELECT CONSECUT FROM CONSECUT WHERE TIPODCTO = '" + rqTipoDctoMae + "'"
+
+IF SQLEXEC(ON, lcSqlQuery, "lcValidation") != 1
+	_CLIPTEXT = lcSqlQuery
+	ERROR("Error al consultar el consecutivo de requisiciones.")
+ENDIF
+
+SELECT lcValidation
+GO TOP
+RETURN lcValidation.CONSECUT
+
+USE IN SELECT ("lcValidation")
+
+RETURN
+
+ENDFUNC
+
+*---------------------------------------------------
+
+FUNCTION updateRQConsecut()
+LOCAL lcValidation
+
+lcSqlQuery = "UPDATE CONSECUT SET CONSECUT = CONSECUT + 1 WHERE TIPODCTO = '" + rqTipoDctoMae + "'"
+
+IF SQLEXEC(ON, lcSqlQuery, "lcValidation") != 1
+	_CLIPTEXT = lcSqlQuery
+	ERROR("Error al actualizar el consecutivo de requisiciones.")
+ENDIF
+
+USE IN SELECT ("lcValidation")
+
+RETURN
+
+ENDFUNC
+
+
+

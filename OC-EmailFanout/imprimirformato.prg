@@ -734,12 +734,13 @@ Else
 *!*	   		mstrsql =   " Select Mtnitres.Nitasigna As Nit,Mtnitres.Email As emailp "+;
 *!*	              " From  Mtnitres Where Mtnitres.Nitasigna=?mNitResponsableRQ "
 
-	mStrSql=" SELECT Mtnitres.Nitasigna AS Nit "+;
-		",Mtnitres.Email AS emailp "+;
-		",MTPROCLI.EMAILP AS EMAILP2 "+;
-		" FROM Mtnitres "+;
-		" INNER JOIN MTPROCLI ON MTPROCLI.NIT = MTNITRES.NITASIGNA "+;
-		" WHERE Mtnitres.Nitasigna =?mNitResponsableRQ "
+*!*		mStrSql=" SELECT Mtnitres.Nitasigna AS Nit "+;
+*!*			",Mtnitres.Email AS emailp "+;
+*!*			",MTPROCLI.EMAILP AS EMAILP2 "+;
+*!*			" FROM Mtnitres "+;
+*!*			" INNER JOIN MTPROCLI ON MTPROCLI.NIT = MTNITRES.NITASIGNA "+;
+*!*			" WHERE Mtnitres.Nitasigna =?mNitResponsableRQ "
+		mStrSql = "SELECT MTNITRES.NITASIGNA AS NIT, MTNITRES.EMAILP AS EMAILP FROM MTNITRES WHERE Mtnitres.Nitasigna = ?mNitResponsableRQ"
 
 Endif
 
