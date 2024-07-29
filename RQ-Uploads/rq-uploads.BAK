@@ -280,7 +280,6 @@ ENDFUNC
 
 FUNCTION saveRQ() AS STRING
 rqConsecutAssigned = getRQConsecut()
-MESSAGEBOX(rqConsecutAssigned)
 
 saveTrade(outRqData.CodProveedor, ;
 		gCodUsuario, ;
@@ -314,6 +313,7 @@ lcSqlQuery = "EXEC dbo.GuardarMvTradeRequisicion '" + ;
 	"', '" + TRANSFORM(lcISBN) + ;
 	"', '" + TRANSFORM(lcCantidad) + ;
 	"', '" + TRANSFORM(lcPrecio) + ;
+	"', '" + TRANSFORM(rqTipoDctoMae) + ;
 	"', '" + TRANSFORM(rqConsecutAssigned) ;
 	+ "'"
 
@@ -334,6 +334,7 @@ lcSqlQuery = "EXEC dbo.GuardarTradeRequisicion '" + ;
 	"', '" + TRANSFORM(lcCodResponsable) + ;
 	"', '" + TRANSFORM(lcCodSede) + ;
 	"', '" + TRANSFORM(lcISBN) + ;
+	"', '" + TRANSFORM(rqTipoDctoMae) + ;
 	"', '" + TRANSFORM(rqConsecutAssigned) ;
 	+ "'"
 
@@ -359,6 +360,7 @@ ENDIF
 SELECT lcValidation
 GO TOP
 RETURN lcValidation.CONSECUT
+
 USE IN SELECT ("lcValidation")
 
 RETURN

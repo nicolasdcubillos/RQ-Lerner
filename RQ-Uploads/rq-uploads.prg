@@ -13,7 +13,6 @@
 *---------------------------------------------------
 
 FUNCTION uploadFile(lcFileName, outRqData)
-rqTipoDctoMae = "RQ"
 LOCAL outErrorMsg
 TRY
 	lcLinesWithErrors = 0
@@ -280,7 +279,6 @@ ENDFUNC
 
 FUNCTION saveRQ() AS STRING
 rqConsecutAssigned = getRQConsecut()
-MESSAGEBOX(rqConsecutAssigned)
 
 saveTrade(outRqData.CodProveedor, ;
 		gCodUsuario, ;
@@ -314,6 +312,7 @@ lcSqlQuery = "EXEC dbo.GuardarMvTradeRequisicion '" + ;
 	"', '" + TRANSFORM(lcISBN) + ;
 	"', '" + TRANSFORM(lcCantidad) + ;
 	"', '" + TRANSFORM(lcPrecio) + ;
+	"', '" + TRANSFORM(rqTipoDctoMae) + ;
 	"', '" + TRANSFORM(rqConsecutAssigned) ;
 	+ "'"
 
@@ -334,6 +333,7 @@ lcSqlQuery = "EXEC dbo.GuardarTradeRequisicion '" + ;
 	"', '" + TRANSFORM(lcCodResponsable) + ;
 	"', '" + TRANSFORM(lcCodSede) + ;
 	"', '" + TRANSFORM(lcISBN) + ;
+	"', '" + TRANSFORM(rqTipoDctoMae) + ;
 	"', '" + TRANSFORM(rqConsecutAssigned) ;
 	+ "'"
 

@@ -54,6 +54,7 @@ CREATE PROCEDURE dbo.GuardarTradeRequisicion
 @codResponsable VARCHAR(255),
 @codSede VARCHAR(255),
 @codISBN VARCHAR(255),
+@rqTipoDcto VARCHAR(255),
 @rqConsecut INTEGER
 AS
 BEGIN
@@ -74,7 +75,7 @@ BEGIN
 	VALUES 
 	(
 	'COM',				/* Origen */
-	'RQ',				/* Tipodcto */
+	@rqTipoDcto,		/* Tipodcto */
 	@rqConsecut,		/* Nrodcto */
 	GETDATE(),			/* Fecha */
 	GETDATE(),			/* Fecing */
@@ -99,6 +100,7 @@ CREATE PROCEDURE dbo.GuardarMvTradeRequisicion
 @codISBN VARCHAR(255),
 @cantidad VARCHAR(255),
 @precio NUMERIC(12, 2),
+@rqTipoDcto VARCHAR(255),
 @rqConsecut INTEGER
 AS
 BEGIN
@@ -128,7 +130,7 @@ BEGIN
 	VALUES 
 	(
 	'COM',				/* Origen */
-	'RQ',				/* Tipodcto */
+	@rqTipoDcto,		/* Tipodcto */
 	@rqConsecut,		/* Nrodcto */
 	GETDATE(),			/* Fecha */
 	GETDATE(),			/* Fecing */
@@ -150,11 +152,15 @@ BEGIN
 END;
 
 GO
+/* 
+	SELECT * FROM RQ_ConsolidadoRequisiciones('20200115', '20251026', 'RQ')  ORDER BY NRODCTO 
+*/
 
 CREATE FUNCTION [dbo].[RQ_ConsolidadoRequisiciones]
 (
 	@fecha1 date,
-	@fecha2 date
+	@fecha2 date,
+	@rqTipoDcto VARCHAR(255)
 )
 Returns Table
 AS
@@ -173,18 +179,14 @@ Return
 	CAST(MVTRADE.RQ_CANTIDAD_FINAL AS INTEGER) AS CANTIDAD_FINAL
 	FROM
 	TRADE,
-	MVTRADE,
-	TIPODCTO
+	MVTRADE
 	WHERE
-	TIPODCTO.DCTOMAE = 'RQ' AND
-	TIPODCTO.TIPODCTO = 'RQ' AND
+	TRADE.TIPODCTO = @rqTipoDcto AND
 	TRADE.NRODCTO = MVTRADE.NRODCTO AND
 	TRADE.TIPODCTO = MVTRADE.TIPODCTO AND
 	TRADE.ORIGEN = MVTRADE.ORIGEN AND
 	TRADE.FECING BETWEEN @fecha1 AND DATEADD(DAY, 1, @fecha2)
 )
-
-
 
 /* 
 	EXEC dbo.GuardarRequisicion '99', '123', '123', '001                                               ', 'SPV739596           ', '5', '12000'
@@ -252,7 +254,8 @@ GO
 CREATE PROCEDURE [dbo].[RQ_SaldoInventarioProducto]
 (
     @fecha1 DATE,
-    @fecha2 DATE
+    @fecha2 DATE,
+	@rqTipoDcto VARCHAR(255)
 )
 AS
 BEGIN
@@ -277,7 +280,7 @@ BEGIN
             COALESCE(CAST(SUM(ISNULL(RCATALOGO.SALDO, 0)) AS INT), 0) AS SALDO
         FROM 
             (SELECT DISTINCT TIPODCTO, NRODCTO, PRODUCTO 
-             FROM RQ_ConsolidadoRequisiciones(''' + CONVERT(NVARCHAR, @fecha1, 112) + ''', ''' + CONVERT(NVARCHAR, @fecha2, 112) + ''')
+             FROM RQ_ConsolidadoRequisiciones(''' + CONVERT(NVARCHAR, @fecha1, 112) + ''', ''' + CONVERT(NVARCHAR, @fecha2, 112) + ''', ''' + @rqTipoDcto + ''')
             ) AS Requisiciones
         LEFT JOIN 
             FNVOF_REPORTECATALOGO(' + CAST(@year AS NVARCHAR(4)) + ', ' + CAST(@month AS NVARCHAR(2)) + ') RCATALOGO
@@ -310,6 +313,15 @@ END;
 GO
 
 /*
-	SELECT * FROM RQ_ConsolidadoRequisiciones('20240615', '20240626')  ORDER BY NRODCTO
-	EXEC dbo.RQ_SaldoInventarioProducto '20240615', '20240626'
+	EXEC dbo.RQ_SaldoInventarioProducto '20240115', '20241030', 'RQ'
+
+	SELECT TIPODCTO, NRODCTO FROM TRADE;
+
+	SELECT TIPODCTO, NRODCTO FROM MVTRADE;
+
+	DELETE FROM MVTRADE;
+
+	DELETE FROM TRADE;
+
+	SELECT TIPODCTO, NRODCTO, RQ_CANTIDAD_FINAL FROM MVTRADE 
 */
