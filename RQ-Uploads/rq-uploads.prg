@@ -349,7 +349,7 @@ ENDFUNC
 FUNCTION getRQConsecut() AS INTEGER
 LOCAL lcValidation
 
-lcSqlQuery = "SELECT CONSECUT FROM CONSECUT WHERE TIPODCTO = '" + rqTipoDctoMae + "'"
+lcSqlQuery = "SELECT CONSECUT + 1 AS CONSECUT FROM CONSECUT WHERE TIPODCTO = '" + rqTipoDctoMae + "'"
 
 IF SQLEXEC(ON, lcSqlQuery, "lcValidation") != 1
 	_CLIPTEXT = lcSqlQuery

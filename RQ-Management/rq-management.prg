@@ -12,13 +12,14 @@
 
 *---------------------------------------------------
 
-FUNCTION saveCantidadFinal(lcTipoDcto, lcNroDcto, lcCantidadFinal) AS STRING
+FUNCTION saveCantidadFinal(lcIdMvTrade, lcCantidadFinal) AS STRING
 lcSqlQuery = "UPDATE MVTRADE SET RQ_CANTIDAD_FINAL = " + TRANSFORM(lcCantidadFinal) + ;
-			 " WHERE TIPODCTO = '" + TRANSFORM(lcTipoDcto) + "' AND NRODCTO = '" + TRANSFORM(lcNroDcto) + "'"
-_CLIPTEXT = lcSqlQuery
+			 " WHERE IDMVTRADE = '" + TRANSFORM(lcIdMvTrade) + "'"
 
+_CLIPTEXT = lcSqlQuery
 IF SQLEXEC(ON, lcSqlQuery) != 1
-	ERROR("Error al actualizar la cantidad final para el documento " + ALLTRIM(TRANSFORM(lcTipoDcto)) + ALLTRIM(TRANSFORM(lcNroDcto)) + ".")
+	_CLIPTEXT = lcSqlQuery
+	ERROR("Error al actualizar la cantidad final para el IdMvTrade " + ALLTRIM(TRANSFORM(lcIdMvTrade)) + ".")
 ENDIF
 
 ENDFUNC

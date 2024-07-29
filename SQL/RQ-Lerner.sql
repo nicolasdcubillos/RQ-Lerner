@@ -171,6 +171,7 @@ Return
 	CONVERT(VARCHAR, TRADE.FECING, 23) AS FECING,
 	TRADE.TIPODCTO,
 	TRADE.NRODCTO,
+	MVTRADE.IDMVTRADE,
 	MVTRADE.PRODUCTO,
 	MVTRADE.NOMBRE,
 	TRADE.CODCC,
@@ -190,7 +191,7 @@ Return
 
 /* 
 	EXEC dbo.GuardarRequisicion '99', '123', '123', '001                                               ', 'SPV739596           ', '5', '12000'
-	SELECT * FROM RQ_ConsolidadoRequisiciones('20240615', '20240626') 
+	SELECT * FROM RQ_ConsolidadoRequisiciones('20240615', '20241026', 'RQ') 
 */
 
 GO
@@ -264,22 +265,26 @@ BEGIN
     DECLARE @month INT = MONTH(@fecha2);
 
     -- Get the distinct GRUPO values and concatenate them into a string
-    SELECT @columns = STRING_AGG(QUOTENAME(GRUPO), ', ') 
-    FROM (SELECT DISTINCT GRUPO FROM TEMP_UBICACIONES) AS Groups;
+    SELECT @columns = STUFF((
+	SELECT DISTINCT ', ' + QUOTENAME(GRUPO)
+	FROM TEMP_UBICACIONES
+	FOR XML PATH(''), TYPE
+	).value('.', 'NVARCHAR(MAX)'), 1, 2, '');
 
     -- Build the dynamic SQL query
     SET @sql = N'
-    SELECT ' + @columns + ', TIPODCTO, NRODCTO, PRODUCTO
+    SELECT ' + @columns + ', TIPODCTO, NRODCTO, PRODUCTO, IDMVTRADE
     FROM 
     (
         SELECT 
             Requisiciones.TIPODCTO,
             Requisiciones.NRODCTO,
             Requisiciones.PRODUCTO,
+			Requisiciones.IDMVTRADE,
             UBIC.GRUPO,
             COALESCE(CAST(SUM(ISNULL(RCATALOGO.SALDO, 0)) AS INT), 0) AS SALDO
         FROM 
-            (SELECT DISTINCT TIPODCTO, NRODCTO, PRODUCTO 
+            (SELECT DISTINCT TIPODCTO, NRODCTO, PRODUCTO, IDMVTRADE
              FROM RQ_ConsolidadoRequisiciones(''' + CONVERT(NVARCHAR, @fecha1, 112) + ''', ''' + CONVERT(NVARCHAR, @fecha2, 112) + ''', ''' + @rqTipoDcto + ''')
             ) AS Requisiciones
         LEFT JOIN 
@@ -291,7 +296,7 @@ BEGIN
         ON 
             RCATALOGO.UBICACION = UBIC.CODIGO
         GROUP BY 
-            Requisiciones.TIPODCTO, Requisiciones.NRODCTO, Requisiciones.PRODUCTO, UBIC.GRUPO
+            Requisiciones.TIPODCTO, Requisiciones.NRODCTO, Requisiciones.PRODUCTO, Requisiciones.IDMVTRADE, UBIC.GRUPO
     ) AS SourceTable
     PIVOT
     (
@@ -304,7 +309,8 @@ BEGIN
     SELECT ' + @columns + ',
            ISNULL(TIPODCTO, '''') AS TIPODCTO, 
            ISNULL(NRODCTO, '''') AS NRODCTO, 
-           ISNULL(PRODUCTO, '''') AS PRODUCTO
+           ISNULL(PRODUCTO, '''') AS PRODUCTO,
+           ISNULL(IDMVTRADE, '''') AS IDMVTRADE
     FROM (' + @sql + N') AS Pivoted';
 
     -- Execute the dynamic SQL query

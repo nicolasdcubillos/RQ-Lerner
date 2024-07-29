@@ -13,7 +13,6 @@
 *---------------------------------------------------
 
 FUNCTION uploadFile(lcFileName, outRqData)
-rqTipoDctoMae = "RQ"
 LOCAL outErrorMsg
 TRY
 	lcLinesWithErrors = 0
@@ -350,7 +349,7 @@ ENDFUNC
 FUNCTION getRQConsecut() AS INTEGER
 LOCAL lcValidation
 
-lcSqlQuery = "SELECT CONSECUT FROM CONSECUT WHERE TIPODCTO = '" + rqTipoDctoMae + "'"
+lcSqlQuery = "SELECT CONSECUT + 1 FROM CONSECUT WHERE TIPODCTO = '" + rqTipoDctoMae + "'"
 
 IF SQLEXEC(ON, lcSqlQuery, "lcValidation") != 1
 	_CLIPTEXT = lcSqlQuery
