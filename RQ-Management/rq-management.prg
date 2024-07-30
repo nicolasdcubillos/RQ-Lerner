@@ -28,13 +28,7 @@ ENDFUNC
 
 FUNCTION sendToDispatch(lcIdMvTrade)
 
-lcSqlQuery = "UPDATE MVTRADE SET RQ_ESTADO = 1" + ;
-			 " WHERE IDMVTRADE = '" + TRANSFORM(lcIdMvTrade) + "'"
-
-IF SQLEXEC(ON, lcSqlQuery) != 1
-	_CLIPTEXT = lcSqlQuery
-	ERROR("Error al hacer el paso a despacho (estado 1) para el registro IdMvTrade " + ALLTRIM(TRANSFORM(lcIdMvTrade)) + ".")
-ENDIF
+updateRqStatus(lcIdMvTrade, 1)
 
 ENDFUNC
 
@@ -42,12 +36,44 @@ ENDFUNC
 
 FUNCTION createOC(lcIdMvTrade)
 
-lcSqlQuery = "UPDATE MVTRADE SET RQ_ESTADO = 2" + ;
+updateRqStatus(lcIdMvTrade, 2)
+
+ENDFUNC
+
+*---------------------------------------------------
+
+FUNCTION updateRqStatus(lcIdMvTrade, lcEstado)
+
+lcSqlQuery = "UPDATE MVTRADE SET RQ_ESTADO = RQ_ESTADO + " + TRANSFORM(lcEstado) + ;
 			 " WHERE IDMVTRADE = '" + TRANSFORM(lcIdMvTrade) + "'"
 
 IF SQLEXEC(ON, lcSqlQuery) != 1
 	_CLIPTEXT = lcSqlQuery
-	ERROR("Error al crear la órden de compra (estado 2) para el registro IdMvTrade " + ALLTRIM(TRANSFORM(lcIdMvTrade)) + ".")
+	ERROR("Error al actualizar el estado de la RQ para el registro IdMvTrade " + ALLTRIM(TRANSFORM(lcIdMvTrade)) + ".")
 ENDIF
 
 ENDFUNC
+
+*---------------------------------------------------
+
+FUNCTION getRqTipoDcto() AS INTEGER
+LOCAL lcValidation
+
+lcSqlQuery = "SELECT TIPODCTO FROM TIPODCTO WHERE DCTOMAE = 'RQ' AND X_CURRENT = 1"
+
+IF SQLEXEC(ON, lcSqlQuery, "lcValidation") != 1
+	_CLIPTEXT = lcSqlQuery
+	ERROR("Error al consultar el tipo documento de requisiciones.")
+ENDIF
+
+SELECT lcValidation
+GO TOP
+RETURN lcValidation.TIPODCTO
+
+USE IN SELECT ("lcValidation")
+
+RETURN
+
+ENDFUNC
+
+

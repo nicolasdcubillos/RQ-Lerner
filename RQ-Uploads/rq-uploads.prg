@@ -384,5 +384,25 @@ RETURN
 
 ENDFUNC
 
+*---------------------------------------------------
 
+FUNCTION getRqTipoDcto() AS INTEGER
+LOCAL lcValidation
+
+lcSqlQuery = "SELECT TIPODCTO FROM TIPODCTO WHERE DCTOMAE = 'RQ' AND X_CURRENT = 1"
+
+IF SQLEXEC(ON, lcSqlQuery, "lcValidation") != 1
+	_CLIPTEXT = lcSqlQuery
+	ERROR("Error al consultar el tipo documento de requisiciones.")
+ENDIF
+
+SELECT lcValidation
+GO TOP
+RETURN lcValidation.TIPODCTO
+
+USE IN SELECT ("lcValidation")
+
+RETURN
+
+ENDFUNC
 
