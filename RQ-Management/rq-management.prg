@@ -185,8 +185,10 @@ FOR i = countColumnasConsolidado + 2 TO lnTotal && + 2 para pararse en el primer
 	IF (lcColumnValue != 0)
 		lcValidation = 1
 		EXIT
-	ELSE IF (lcColumnValue < 0)
-		ERROR(CHR(13) + CHR(13) + "Una o más cantidades asignadas a una ubicación contienen valores negativos." + CHR(13) + CHR(13) + "Revise la información ingresada e intente nuevamente.")
+	ELSE 
+		IF (lcColumnValue < 0)
+			ERROR(CHR(13) + CHR(13) + "Una o más cantidades asignadas a una ubicación contienen valores negativos." + CHR(13) + CHR(13) + "Revise la información ingresada e intente nuevamente.")
+		ENDIF
 	ENDIF
 	i = i + 1
 NEXT

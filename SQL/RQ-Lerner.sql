@@ -1,6 +1,35 @@
 USE LERNER;
 /* USE LERNER_PLUS */
 
+/* Script para crear la tabla X_SIGLAUBICA */
+
+IF NOT EXISTS (
+    SELECT 1
+    FROM INFORMATION_SCHEMA.COLUMNS 
+    WHERE TABLE_NAME = 'X_SIGLAUBICA' 
+)
+BEGIN
+    CREATE TABLE [dbo].[X_SIGLAUBICA](
+	[SIGLA] [char](5) NULL,
+	[GRUPO] [nchar](40) NULL,
+	[CODCC] [varchar](20) NULL,
+	[ELIMINAR] [bit] NULL
+	) ON [PRIMARY]
+END;
+
+/* Script para crear el campo Sigla si no existe en MTUBICA */
+
+IF NOT EXISTS (
+    SELECT 1
+    FROM INFORMATION_SCHEMA.COLUMNS 
+    WHERE TABLE_NAME = 'MTUBICA' 
+    AND COLUMN_NAME = 'SIGLA'
+)
+BEGIN
+    ALTER TABLE MTUBICA
+    ADD SIGLA VARCHAR(20);
+END;
+
 /* Creando el campo RQ_CANTIDAD_OC si no existe en MVTRADE */
 
 IF NOT EXISTS (
@@ -491,10 +520,8 @@ INSERT INTO RQ_EXCEL_CONFIG (COLUMN_NAME, EXCLUDE_VALIDATIONS, DATA_TYPE, POSITI
 ('ESTADO', 0, 'C', 12);
 
 SELECT * FROM RQ_EXCEL_CONFIG ORDER BY POSITION;
+
+EXEC dbo.RQ_SaldoInventarioProductoTemp '20240115', '20241030', 'RQ' 
+
 */
-*/
-
-
-
-	/* EXEC dbo.RQ_SaldoInventarioProductoTemp '20240115', '20241030', 'RQ' */
 

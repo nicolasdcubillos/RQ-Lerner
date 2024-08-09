@@ -224,6 +224,7 @@ SCAN
 			ocConsecutAssigned = oCodProveedorCollection.ITEM(outRqData.CodProveed)
 		CATCH
 			ocConsecutAssigned = getOCConsecut()
+			lcLastGenerated = ocConsecutAssigned
 			
 			IF lcFirstGenerated == 0
 				lcFirstGenerated = ocConsecutAssigned
