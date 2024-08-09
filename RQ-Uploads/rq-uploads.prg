@@ -280,7 +280,7 @@ ENDFUNC
 FUNCTION saveRQ() AS STRING
 rqConsecutAssigned = getRQConsecut()
 
-saveTrade(outRqData.CodProveedor, ;
+saveTrade(0, ;
 		gCodUsuario, ;
 		lcCodResponsable, ;
 		outRqData.CodSede, ;

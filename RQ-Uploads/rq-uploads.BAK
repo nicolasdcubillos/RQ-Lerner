@@ -398,7 +398,7 @@ ENDIF
 
 SELECT lcValidation
 GO TOP
-RETURN lcValidation.CONSECUT
+RETURN lcValidation.TIPODCTO
 
 USE IN SELECT ("lcValidation")
 
