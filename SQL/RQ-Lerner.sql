@@ -88,6 +88,14 @@ DROP FUNCTION [dbo].[RQ_ConsolidadoRequisiciones]
 GO
 DROP FUNCTION [dbo].[RQ_ConsolidadoRequisicionesRango]
 GO
+DROP VIEW [dbo].[X_VTEMP_UBICACIONES]
+GO
+DROP VIEW [dbo].[X_SIGLASCODCC]
+GO
+DROP PROCEDURE dbo.X_ACTUALIZA_SIGLAUBICA;
+GO
+DROP PROCEDURE dbo.X_ACTUALIZA_SIGLACODCC;
+GO
 
 /* 
 	Function GuardarTradeRequisicion:
@@ -425,6 +433,118 @@ BEGIN
 END;
 GO
 
+CREATE VIEW X_VTEMP_UBICACIONES
+AS
+	SELECT  MTUBICA.CODUBICA CODIGO,
+	MTUBICA.NOMBRE NOMBRE,
+	MTUBICA.SIGLA ,
+	X_SIGLAUBICA.GRUPO,
+	X_SIGLAUBICA.CODCC CENTROCOSTO,
+	CENTCOS.NOMBRE  NOMBRE_CENTROCOSTOS
+	FROM  X_SIGLAUBICA,MTUBICA,CENTCOS
+	WHERE MTUBICA.SIGLA=X_SIGLAUBICA.SIGLA
+	AND X_SIGLAUBICA.CODCC=CENTCOS.CODCC
+GO
+
+CREATE VIEW  [dbo].[X_SIGLASCODCC]
+AS
+	SELECT X_SIGLAUBICA.SIGLA,
+	X_SIGLAUBICA.GRUPO,
+	X_SIGLAUBICA.CODCC,
+	CENTCOS.NOMBRE,
+	X_SIGLAUBICA.ELIMINAR
+	FROM X_SIGLAUBICA, CENTCOS
+	WHERE CENTCOS.AUXILIAR=1
+	AND X_SIGLAUBICA.CODCC=CENTCOS.CODCC
+
+GO
+
+CREATE Procedure [dbo].[X_ACTUALIZA_SIGLAUBICA]
+(
+	@pCodUbica VarChar (20),
+	@pSigla	VarChar(20)
+)
+As
+
+--Comienza Control de Error
+Begin Try 
+
+	UPDATE MTUBICA
+		set SIGLA=RTRIM(@pSigla)
+		where  CODUBICA =RTRIM(@pCodUbica)
+
+End Try
+----Atrapa los errores
+Begin Catch 	
+	-- Ejecutar Sp que muestra informacion del error
+	Exec ofsp_ObtenerInformacionError 'No es posible ejecutar procedimiento almacenado  X_ACTUALIZA_SIGLAUBICA'
+End Catch
+
+GO
+
+
+CREATE Procedure X_ACTUALIZA_SIGLACODCC
+-- Se declaran los parámetros de actualización	
+	( 
+	@pSigla Varchar (5),
+	@pGrupo Varchar (60),
+	@PCodcc Varchar (20),
+	@pEliminar Bit 
+	)
+
+As Begin
+
+
+-- Inicia transacción
+Begin Try 
+	If @pEliminar = 1
+	Begin
+		-- Valida integridad referencial
+		Execute DBO.OF_SP_ValidarForeingkey X_SIGLAUBICA,@pSigla		
+	End	
+	-----------------------------------------------------------------------------------	
+	-- Corre las rutinas de eliminación, actualización e inserción
+	-- Eliminación
+	If @pEliminar = 1 
+		Begin
+			Delete X_SIGLAUBICA Where Sigla = @pSigla
+		End	
+	Else 
+		Begin
+		-- Actualización
+		If  Exists(Select Sigla  From X_SIGLAUBICA  Where Sigla = @pSigla)
+			Begin
+				Update X_SIGLAUBICA Set  GRUPO = @pGrupo,Codcc=@PCodcc  Where Sigla = @psigla 
+			End
+		-- Inserción
+		Else
+			Begin		
+				Insert  X_SIGLAUBICA (Sigla,grupo,codcc,Eliminar) 	
+						Values	(@pSigla,@pGrupo,@PCodcc,0)	
+			End 	
+		End
+	-----------------------------------------------------------------------------------			
+-- Finaliza transacción
+End Try
+
+
+--- Recolección de errores 
+BEGIN CATCH
+
+	DECLARE @ErrorMessage NVARCHAR(4000);
+	SELECT @ErrorMessage = ERROR_MESSAGE()
+		
+	IF @ErrorMessage='Error de integridad'
+		BEGIN
+			Raiserror('No se puede Eliminar un registro que tenga relacion con otra tabla',11,1)
+		END
+	ELSE
+		BEGIN
+			Exec ofsp_ObtenerInformacionError 'No es posible ejecutar procedimiento almacenado de X_ACTUALIZA_SIGLACODCC '
+		END
+END CATCH
+End
+
 /*
 	EXEC dbo.RQ_SaldoInventarioProductoTemp '20240115', '20241030', 'RQ'
 
@@ -522,6 +642,4 @@ INSERT INTO RQ_EXCEL_CONFIG (COLUMN_NAME, EXCLUDE_VALIDATIONS, DATA_TYPE, POSITI
 SELECT * FROM RQ_EXCEL_CONFIG ORDER BY POSITION;
 
 EXEC dbo.RQ_SaldoInventarioProductoTemp '20240115', '20241030', 'RQ' 
-
-*/
-
+*/ */
