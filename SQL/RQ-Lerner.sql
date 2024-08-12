@@ -78,11 +78,11 @@ BEGIN
     ADD X_CURRENT NUMERIC;
 END;
 
+DROP PROCEDURE dbo.RQ_SaldoInventarioProducto;
+GO
 DROP PROCEDURE dbo.GuardarTradeRequisicion;
 GO
 DROP PROCEDURE dbo.GuardarMvTradeRequisicion;
-GO
-DROP PROCEDURE dbo.RQ_SaldoInventarioProducto;
 GO
 DROP FUNCTION [dbo].[RQ_ConsolidadoRequisiciones]
 GO
@@ -95,6 +95,8 @@ GO
 DROP PROCEDURE dbo.X_ACTUALIZA_SIGLAUBICA;
 GO
 DROP PROCEDURE dbo.X_ACTUALIZA_SIGLACODCC;
+GO
+DROP FUNCTION dbo.RQ_SaldosInventario;
 GO
 
 /* 
@@ -197,7 +199,7 @@ BEGIN
 	(SELECT DESCRIPCIO FROM MTMERCIA WHERE CODIGO = @codISBN),		/* Nombre */
 	@cantidad,			/* Cantidad */
 	@cantidad,			/* Cantorig */
-	@cantidad - CAST(ISNULL((SELECT SUM(SALDO) FROM FNVOF_REPORTECATALOGO(YEAR(GETDATE()), MONTH(GETDATE())) WHERE PRODUCTO = @codISBN), 0) AS INTEGER),			/* RQ_Cantidad_OC */
+	ISNULL(@cantidad, 0),			/* RQ_Cantidad_OC */
 	@cantidad,			/* Canventa */
 	@codSede,			/* Codcc */
 	'0',				/* Tipomvto */
@@ -244,7 +246,7 @@ Return
 	MVTRADE.DETALLE,
 	CAST(MVTRADE.CANTIDAD AS INTEGER) AS CANTIDAD,
 	0 AS CHECKOC,
-	CAST(MVTRADE.RQ_CANTIDAD_OC AS INTEGER) AS CANTIDAD_OC,
+	ISNULL(CAST(MVTRADE.RQ_CANTIDAD_OC AS INTEGER), 0) AS CANTIDAD_OC,
 	CAST(ISNULL((SELECT SUM(SALDO) FROM FNVOF_REPORTECATALOGO(YEAR(@fecha2), MONTH(@fecha2)) WHERE PRODUCTO = MVTRADE.PRODUCTO), 0) AS INTEGER) AS TOTAL_SALDO_INVENTARIO
 	FROM
 	TRADE,
@@ -310,6 +312,48 @@ Return
 GO
 
 /* 
+	Procedure RQ_SaldosInventario:
+		Función que consulta los saldos de un producto que recibe por parámetro y recibe el saldo agrupado por GRUPO configurado en las tablas.
+	Parámetros:
+		@producto - Código del producto a buscar
+*/
+
+CREATE FUNCTION [dbo].[RQ_SaldosInventario]
+(
+    @fecha1 DATE,
+    @fecha2 DATE,
+	@rqTipoDcto VARCHAR(255)
+)
+Returns Table
+AS
+Return
+(
+	SELECT 
+	UBICACIONES.GRUPO, UBICACIONES.CODCC, CONSOLIDADO.PRODUCTO, SUM (SALDO) AS SALDO
+	FROM 
+	X_SIGLAUBICA UBICACIONES
+	LEFT OUTER JOIN
+	MTUBICA 
+	ON 
+	UBICACIONES.SIGLA = MTUBICA.SIGLA
+	LEFT OUTER JOIN 
+	FNVOF_REPORTECATALOGO(YEAR(GETDATE()), MONTH(GETDATE())) SALDOS 
+	ON 
+	SALDOS.UBICACION = MTUBICA.CODUBICA
+	FULL JOIN
+	RQ_ConsolidadoRequisiciones(@fecha1, @fecha2, @rqTipoDcto) CONSOLIDADO
+	ON 
+	CONSOLIDADO.PRODUCTO = SALDOS.PRODUCTO
+	GROUP BY UBICACIONES.GRUPO, UBICACIONES.CODCC, UBICACIONES.GRUPO, CONSOLIDADO.PRODUCTO
+)
+
+/*
+	SELECT * FROM RQ_SaldosInventario('19990101', '20250101', 'RQ')
+*/
+
+GO
+
+/* 
 	Procedure RQ_SaldoInventarioProducto:
 		Este procedure consulta el saldo de inventario para las RQs encontradas en un rango de fechas y por medio de la 
 		función PIVOT la retorna en columnas variables (columna por ubicación y su saldo de inventario).
@@ -324,52 +368,33 @@ CREATE PROCEDURE [dbo].[RQ_SaldoInventarioProducto]
 (
     @fecha1 DATE,
     @fecha2 DATE,
-	@rqTipoDcto VARCHAR(255)
+    @rqTipoDcto VARCHAR(255)
 )
 AS
 BEGIN
-    DECLARE @columnsExistencias NVARCHAR(MAX), @columnsAsignacion NVARCHAR(MAX), @columnsIntercaladas NVARCHAR(MAX), @sql NVARCHAR(MAX);
+    DECLARE @columns NVARCHAR(MAX), @sql NVARCHAR(MAX);
     DECLARE @year INT = YEAR(@fecha2);
     DECLARE @month INT = MONTH(@fecha2);
 
-    -- Obtener las columnas para "Existencias"
-    SELECT @columnsExistencias = STUFF((
-        SELECT DISTINCT ', ' + QUOTENAME(GRUPO + ' 1')
+    -- Obtener los valores distintos de GRUPO y concatenarlos en una cadena con las columnas adicionales intercaladas
+    SELECT @columns = STUFF((
+        SELECT DISTINCT 
+            ', ' + QUOTENAME(GRUPO) + ', 0 AS ' + QUOTENAME(GRUPO + '_NULL')
         FROM TEMP_UBICACIONES
         FOR XML PATH(''), TYPE
-    ).value('.', 'NVARCHAR(MAX)'), 1, 2, '');
+        ).value('.', 'NVARCHAR(MAX)'), 1, 2, '');
 
-    -- Obtener las columnas para "Asignación"
-    SELECT @columnsAsignacion = STUFF((
-        SELECT DISTINCT ', ' + QUOTENAME(GRUPO + ' 2')
-        FROM TEMP_UBICACIONES
-        FOR XML PATH(''), TYPE
-    ).value('.', 'NVARCHAR(MAX)'), 1, 2, '');
-
-    -- Crear columnas intercaladas para "Existencias" y "Asignación"
-    SELECT @columnsIntercaladas = STUFF((
-        SELECT DISTINCT ', ' + 
-            QUOTENAME(GRUPO + ' 1') + ', ' + 
-            QUOTENAME(GRUPO + ' 2')
-        FROM TEMP_UBICACIONES
-        FOR XML PATH(''), TYPE
-    ).value('.', 'NVARCHAR(MAX)'), 1, 2, '');
-
-    -- Construir la consulta dinámica
+    -- Construir la consulta SQL dinámica
     SET @sql = N'
-    SELECT ' + @columnsIntercaladas + ', 
-           ISNULL(PivotExistencias.TIPODCTO, '''') AS TIPODCTO, 
-           ISNULL(PivotExistencias.NRODCTO, '''') AS NRODCTO, 
-           ISNULL(PivotExistencias.PRODUCTO, '''') AS PRODUCTO,
-           ISNULL(PivotExistencias.IDMVTRADE, '''') AS IDMVTRADE
+    SELECT ' + @columns + ', TIPODCTO, NRODCTO, PRODUCTO, IDMVTRADE
     FROM 
     (
         SELECT 
             Requisiciones.TIPODCTO,
             Requisiciones.NRODCTO,
             Requisiciones.PRODUCTO,
-			Requisiciones.IDMVTRADE,
-            UBIC.GRUPO + '' (EXISTENCIAS)'' AS GRUPO,
+            Requisiciones.IDMVTRADE,
+            UBIC.GRUPO,
             COALESCE(CAST(SUM(ISNULL(RCATALOGO.SALDO, 0)) AS INT), 0) AS SALDO
         FROM 
             (SELECT DISTINCT TIPODCTO, NRODCTO, PRODUCTO, IDMVTRADE
@@ -389,48 +414,22 @@ BEGIN
     PIVOT
     (
         MAX(SALDO)
-        FOR GRUPO IN (' + @columnsExistencias + N')
-    ) AS PivotExistencias
+        FOR GRUPO IN (' + REPLACE(@columns, ', 0 AS ', ', ') + N')
+    ) AS PivotTable';
 
-    FULL JOIN
-
-    (
-        SELECT 
-            Requisiciones.TIPODCTO AS TIPODCTO_ASIGN,
-            Requisiciones.NRODCTO AS NRODCTO_ASIGN,
-            Requisiciones.PRODUCTO AS PRODUCTO_ASIGN,
-			Requisiciones.IDMVTRADE AS IDMVTRADE_ASIGN,
-            UBIC.GRUPO + '' (ASIGNACION)'' AS GRUPO,
-            COALESCE(CAST(SUM(ISNULL(RCATALOGO.SALDO, 0)) AS INT), 0) AS SALDO
-        FROM 
-            (SELECT DISTINCT TIPODCTO, NRODCTO, PRODUCTO, IDMVTRADE
-             FROM RQ_ConsolidadoRequisiciones(''' + CONVERT(NVARCHAR, @fecha1, 112) + ''', ''' + CONVERT(NVARCHAR, @fecha2, 112) + ''', ''' + @rqTipoDcto + ''')
-            ) AS Requisiciones
-        LEFT JOIN 
-            FNVOF_REPORTECATALOGO(' + CAST(@year AS NVARCHAR(4)) + ', ' + CAST(@month AS NVARCHAR(2)) + ') RCATALOGO
-        ON 
-            Requisiciones.PRODUCTO = RCATALOGO.PRODUCTO
-        LEFT JOIN 
-            TEMP_UBICACIONES UBIC
-        ON 
-            RCATALOGO.UBICACION = UBIC.CODIGO
-        GROUP BY 
-            Requisiciones.TIPODCTO, Requisiciones.NRODCTO, Requisiciones.PRODUCTO, Requisiciones.IDMVTRADE, UBIC.GRUPO
-    ) AS SourceTable2
-    PIVOT
-    (
-        MAX(SALDO)
-        FOR GRUPO IN (' + @columnsAsignacion + N')
-    ) AS PivotAsignacion
-
-    ON PivotExistencias.TIPODCTO = PivotAsignacion.TIPODCTO_ASIGN 
-       AND PivotExistencias.NRODCTO = PivotAsignacion.NRODCTO_ASIGN
-       AND PivotExistencias.PRODUCTO = PivotAsignacion.PRODUCTO_ASIGN
-       AND PivotExistencias.IDMVTRADE = PivotAsignacion.IDMVTRADE_ASIGN';
+    -- Envolver el resultado del PIVOT
+    SET @sql = N'
+    SELECT ' + @columns + ',
+           ISNULL(TIPODCTO, '''') AS TIPODCTO, 
+           ISNULL(NRODCTO, '''') AS NRODCTO, 
+           ISNULL(PRODUCTO, '''') AS PRODUCTO,
+           ISNULL(IDMVTRADE, '''') AS IDMVTRADE
+    FROM (' + @sql + N') AS Pivoted';
 
     -- Ejecutar la consulta SQL dinámica
     EXEC sp_executesql @sql;
 END;
+
 GO
 
 CREATE VIEW X_VTEMP_UBICACIONES
@@ -642,4 +641,11 @@ INSERT INTO RQ_EXCEL_CONFIG (COLUMN_NAME, EXCLUDE_VALIDATIONS, DATA_TYPE, POSITI
 SELECT * FROM RQ_EXCEL_CONFIG ORDER BY POSITION;
 
 EXEC dbo.RQ_SaldoInventarioProductoTemp '20240115', '20241030', 'RQ' 
+
+
+INSERT INTO MTPOPUPREPORTE 
+    (CAMPOMOSTRAR, CAMPOVALOR, COMENTARIO, IDPOPUP, SENTENCIA, TABLA) 
+VALUES 
+    ('Grupo', 'Sigla', 'Consulta Maestro Siglas Ubicaciones', 'SIGLAUBICA', 'SELECT SIGLA, GRUPO FROM X_SIGLAUBICA', 'X_SIGLAUBICA');
+
 */ */
