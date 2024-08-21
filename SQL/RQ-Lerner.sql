@@ -241,12 +241,16 @@ Return
 	MVTRADE.PRODUCTO,
 	MVTRADE.NOMBRE,
 	TRADE.CODCC,
-	MVTRADE.NIT AS CODPROVEEDOR,
+	(SELECT CAST(DETALLE AS VARCHAR(50)) FROM MTPROCLI WHERE NIT = MVTRADE.NIT) AS CODPROVEEDOR,
 	MVTRADE.VALORUNIT,
 	MVTRADE.DETALLE,
 	CAST(MVTRADE.CANTIDAD AS INTEGER) AS CANTIDAD,
 	0 AS CHECKOC,
 	ISNULL(CAST(MVTRADE.RQ_CANTIDAD_OC AS INTEGER), 0) AS CANTIDAD_OC,
+	0 UBICACION1,
+	0 UBICACION2,
+	0 UBICACION3,
+	0 UBICACION4,
 	CAST(ISNULL((SELECT SUM(SALDO) FROM FNVOF_REPORTECATALOGO(YEAR(@fecha2), MONTH(@fecha2)) WHERE PRODUCTO = MVTRADE.PRODUCTO), 0) AS INTEGER) AS TOTAL_SALDO_INVENTARIO
 	FROM
 	TRADE,
@@ -290,12 +294,16 @@ Return
 	MVTRADE.PRODUCTO,
 	MVTRADE.NOMBRE,
 	TRADE.CODCC,
-	MVTRADE.NIT AS CODPROVEEDOR,
+	(SELECT CAST(DETALLE AS VARCHAR(50)) FROM MTPROCLI WHERE NIT = MVTRADE.NIT) AS CODPROVEEDOR,
 	MVTRADE.VALORUNIT,
-	MVTRADE.DETALLE,
+	MVTRADE.NOTA,
 	CAST(MVTRADE.CANTIDAD AS INTEGER) AS CANTIDAD,
 	0 AS CHECKOC,
 	CAST(MVTRADE.RQ_CANTIDAD_OC AS INTEGER) AS CANTIDAD_OC,
+	0 UBICACION1,
+	0 UBICACION2,
+	0 UBICACION3,
+	0 UBICACION4,
 	CAST(ISNULL((SELECT SUM(SALDO) FROM FNVOF_REPORTECATALOGO(YEAR(GETDATE()), MONTH(GETDATE())) WHERE PRODUCTO = MVTRADE.PRODUCTO), 0) AS INTEGER) AS TOTAL_SALDO_INVENTARIO
 	FROM
 	TRADE,
@@ -368,7 +376,7 @@ CREATE PROCEDURE [dbo].[RQ_SaldoInventarioProducto]
 (
     @fecha1 DATE,
     @fecha2 DATE,
-    @rqTipoDcto VARCHAR(255)
+	@rqTipoDcto VARCHAR(255)
 )
 AS
 BEGIN
@@ -376,15 +384,14 @@ BEGIN
     DECLARE @year INT = YEAR(@fecha2);
     DECLARE @month INT = MONTH(@fecha2);
 
-    -- Obtener los valores distintos de GRUPO y concatenarlos en una cadena con las columnas adicionales intercaladas
+    -- Get the distinct GRUPO values and concatenate them into a string
     SELECT @columns = STUFF((
-        SELECT DISTINCT 
-            ', ' + QUOTENAME(GRUPO) + ', 0 AS ' + QUOTENAME(GRUPO + '_NULL')
-        FROM TEMP_UBICACIONES
-        FOR XML PATH(''), TYPE
-        ).value('.', 'NVARCHAR(MAX)'), 1, 2, '');
+	SELECT DISTINCT ', ' + QUOTENAME(GRUPO)
+	FROM TEMP_UBICACIONES
+	FOR XML PATH(''), TYPE
+	).value('.', 'NVARCHAR(MAX)'), 1, 2, '');
 
-    -- Construir la consulta SQL dinámica
+    -- Build the dynamic SQL query
     SET @sql = N'
     SELECT ' + @columns + ', TIPODCTO, NRODCTO, PRODUCTO, IDMVTRADE
     FROM 
@@ -393,7 +400,7 @@ BEGIN
             Requisiciones.TIPODCTO,
             Requisiciones.NRODCTO,
             Requisiciones.PRODUCTO,
-            Requisiciones.IDMVTRADE,
+			Requisiciones.IDMVTRADE,
             UBIC.GRUPO,
             COALESCE(CAST(SUM(ISNULL(RCATALOGO.SALDO, 0)) AS INT), 0) AS SALDO
         FROM 
@@ -405,7 +412,7 @@ BEGIN
         ON 
             Requisiciones.PRODUCTO = RCATALOGO.PRODUCTO
         LEFT JOIN 
-            TEMP_UBICACIONES UBIC
+            X_VTEMP_UBICACIONES UBIC
         ON 
             RCATALOGO.UBICACION = UBIC.CODIGO
         GROUP BY 
@@ -414,10 +421,10 @@ BEGIN
     PIVOT
     (
         MAX(SALDO)
-        FOR GRUPO IN (' + REPLACE(@columns, ', 0 AS ', ', ') + N')
+        FOR GRUPO IN (' + @columns + N')
     ) AS PivotTable';
 
-    -- Envolver el resultado del PIVOT
+    -- Wrap the PIVOT result to replace NULLs with empty string
     SET @sql = N'
     SELECT ' + @columns + ',
            ISNULL(TIPODCTO, '''') AS TIPODCTO, 
@@ -426,10 +433,9 @@ BEGIN
            ISNULL(IDMVTRADE, '''') AS IDMVTRADE
     FROM (' + @sql + N') AS Pivoted';
 
-    -- Ejecutar la consulta SQL dinámica
+    -- Execute the dynamic SQL query
     EXEC sp_executesql @sql;
 END;
-
 GO
 
 CREATE VIEW X_VTEMP_UBICACIONES

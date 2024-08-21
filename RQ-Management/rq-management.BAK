@@ -36,7 +36,7 @@ ENDFUNC
 
 FUNCTION updateRqStatus(lcIdMvTrade, lcEstado)
 
-lcSqlQuery = "UPDATE MVTRADE SET RQ_ESTADO = RQ_ESTADO + " + TRANSFORM(lcEstado) + ;
+lcSqlQuery = "UPDATE MVTRADE SET RQ_ESTADO = ISNULL(RQ_ESTADO, 0) + " + TRANSFORM(lcEstado) + ;
 	" WHERE IDMVTRADE = '" + TRANSFORM(lcIdMvTrade) + "'"
 	
 	MESSAGEBOX(lcSqlQuery)
@@ -182,7 +182,7 @@ ENDFUNC
 FUNCTION validateOCLine()
 lcValidation = 0
 
-FOR i = countColumnasConsolidado + 2 TO lnTotal && + 2 para pararse en el primer valor a asignar de los saldos.
+FOR i = lcStartAsignaciones TO lcStartAsignaciones + lcTotalAsignaciones - 1
 	lcColumnName = FIELD(i, "outRqData")
 	lcColumnValue = EVAL("outRqData." + lcColumnName)
 	IF (lcColumnValue != 0)
@@ -193,7 +193,6 @@ FOR i = countColumnasConsolidado + 2 TO lnTotal && + 2 para pararse en el primer
 			ERROR(CHR(13) + CHR(13) + "Una o más cantidades asignadas a una ubicación contienen valores negativos." + CHR(13) + CHR(13) + "Revise la información ingresada e intente nuevamente.")
 		ENDIF
 	ENDIF
-	i = i + 1
 NEXT
 
 IF lcValidation == 0
@@ -247,9 +246,10 @@ SCAN
 			updateOCConsecut()
 		ENDTRY
 
-		FOR i = countColumnasConsolidado + 2 TO lnTotal && + 2 para pararse en el primer valor a asignar de los saldos.
+		FOR i = lcStartAsignaciones TO lcStartAsignaciones + lcTotalAsignaciones - 1
 			lcColumnName = FIELD(i, "outRqData")
 			lcCantidad = EVAL("outRqData." + lcColumnName)
+			
 			IF (lcCantidad != 0)
 				lcCodCcGrupo = collectionUbicaciones.ITEM(lcForm.rqData.COLUMNS(i).Header1.CAPTION)
 
@@ -261,7 +261,6 @@ SCAN
 					outRqData.VALORUNIT, ;
 					ocConsecutAssigned)
 			ENDIF
-			i = i + 1
 		NEXT
 
 		updateRqStatus(outRqData.IdMvTrade_, 2)
@@ -408,22 +407,15 @@ ENDIF
 AFIELDS(lcFieldsTb2, "lcRQSaldoInventarioProducto")
 
 lcForm.rqData.COLUMNCOUNT = lcForm.rqData.COLUMNCOUNT + (countColumnasSaldos) && *2 porque se ponen las asignaciones y los saldos también
+lcForm.rqData.RECORDSOURCE = ""
 
 FOR lnColumn = 1 TO countColumnasSaldos
 
-	IF lnColumn % 2 = 1 && Valores para columnas de existencias
-		lcNombreGrupo = lcFieldsTb2[lnColumn, 1]
-		lcColor = RGB(206, 231, 230)
-		lcText = " - Existencias"
-		lcReadOnly = .T.
-		lcBold = .T.
-	ELSE				&& Valores para columnas de asignación
-		lcNombreGrupo = SUBSTR(lcFieldsTb2[lnColumn, 1], 1, LEN(lcFieldsTb2[lnColumn, 1]) - 5)
-		lcColor = RGB(206, 231, 255)
-		lcText = " - Asignación"
-		lcReadOnly = .F.
-		lcBold = .F.
-	ENDIF
+	lcNombreGrupo = lcFieldsTb2[lnColumn, 1]
+	lcColor = RGB(206, 231, 230)
+	lcText = " - Existencias"
+	lcReadOnly = .T.
+	lcBold = .T.
 
 	lcNombreGrupo = STRTRAN(lcNombreGrupo, "_", " ")
 	lcCodCc = getCodCcByNombreGrupo(lcNombreGrupo)
@@ -442,9 +434,11 @@ FOR lnColumn = 1 TO countColumnasSaldos
 	lcForm.rqData.COLUMNS(lnColumn + countColumnasConsolidado).Text1.FONTBOLD = .F.  && Establece negrita para el encabezado
 	lcForm.rqData.COLUMNS(lnColumn + countColumnasConsolidado).ALIGNMENT = 2  && Establece la alineación centrada de toda la columna
 	lcForm.rqData.COLUMNS(lnColumn + countColumnasConsolidado).READONLY = lcReadOnly  && Readonly
-	BINDEVENT(lcForm.rqData.Columns(lnColumn + countColumnasConsolidado).Text1, "LostFocus", lcForm, "calculateTotalAssigned")
+	&&BINDEVENT(lcForm.rqData.Columns(lnColumn + countColumnasConsolidado).Text1, "LostFocus", lcForm, "calculateTotalAssigned")
 
 	collectionUbicaciones.ADD(lcCodCc, lcHeaderCaption)
+	lcNombreGrupoAsignacion = lcNombreGrupo + " - Asignación"
+	collectionUbicaciones.ADD(lcCodCc, lcNombreGrupoAsignacion)
 
 ENDFOR
 
