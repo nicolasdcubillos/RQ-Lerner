@@ -215,14 +215,15 @@ ENDFUNC
 FUNCTION saveOC(lcForm) AS STRING
 
 SELECT outRqData
+lcCantidadTotal = 0
 GO TOP
 SCAN
 
 	saveData(outRqData.IDMVTRADE2, outRqData.CANTIDAD_O) && Irá a guardar la cantidad editable indiferentemente de si se crea OC o no
-
+	lcCodProveedString = TRANSFORM(outRqData.CodProveed)
 	IF outRqData.CHECKOC == 1
 		TRY
-			ocConsecutAssigned = oCodProveedorCollection.ITEM(outRqData.CodProveed)
+			ocConsecutAssigned = oCodProveedorCollection.ITEM(lcCodProveedString)
 		CATCH
 			ocConsecutAssigned = getOCConsecut()
 			lcLastGenerated = ocConsecutAssigned
@@ -231,7 +232,7 @@ SCAN
 				lcFirstGenerated = ocConsecutAssigned
 			ENDIF
 
-			oCodProveedorCollection.ADD(ocConsecutAssigned, outRqData.CodProveed)
+			oCodProveedorCollection.ADD(ocConsecutAssigned, lcCodProveedString)
 
 			saveTrade(outRqData.CodProveed, ;
 				gCodUsuario, ;
@@ -257,17 +258,42 @@ SCAN
 					lcCantidad, ;
 					outRqData.VALORUNIT, ;
 					ocConsecutAssigned)
+					
+		    	lcCantidadTotal = lcCantidadTotal + lcCantidad
 			ENDIF
 		NEXT
+		
+		lcBruto = lcCantidadTotal * outRqData.VALORUNIT
+		updateRqTotals(ocConsecutAssigned, lcBruto)
 
 		updateRqStatus(outRqData.IdMvTrade_, 2)
 
 		lcOcCreated = lcOcCreated + 1
+		
 	ENDIF
 
 ENDSCAN
 
 ENDFUNC
+
+*---------------------------------------------------
+
+FUNCTION updateRqTotals(ocConsecutAssigned, lcBruto) AS INTEGER
+LOCAL lcValidation
+
+lcSqlQuery = "UPDATE TRADE SET BRUTO = " + ALLTRIM(TRANSFORM(lcBruto)) + " WHERE TIPODCTO = '" + ocTipoDctoMae + "' AND NRODCTO = " + ALLTRIM(TRANSFORM(ocConsecutAssigned))
+
+IF SQLEXEC(ON, lcSqlQuery, "lcValidation") != 1
+	_CLIPTEXT = lcSqlQuery
+	ERROR("Error al actualizar el total (campo BRUTO) para una órden de compra.")
+ENDIF
+
+USE IN SELECT ("lcValidation")
+
+RETURN
+
+ENDFUNC
+
 
 *---------------------------------------------------
 
@@ -293,6 +319,11 @@ ENDFUNC
 
 FUNCTION getRQs(lcForm)
 
+IF lcBusqueda = .T.
+	lcErrorMessage = "Para realizar una nueva búsqueda, cierre y vuelva a abrir la pantalla."
+	ERROR(lcErrorMessage)
+ENDIF
+
 IF lcForm.Optiongroup1.VALUE = 1
 	WAIT WINDOW "Consultando información de requisiciones para el periodo seleccionado..." NOWAIT
 
@@ -317,7 +348,6 @@ ELSE IF THISFORM.Optiongroup1.VALUE = 2
 	WAIT WINDOW "Consultando información de requisiciones para el rango de documentos seleccionado..." NOWAIT
 ENDIF
 
-
 IF SQLEXEC(ON, lcSqlQueryConsolidado, "lcRQConsolidadoRequisiciones") != 1
 	_CLIPTEXT = lcSqlQuery
 	ERROR ("Error al realizar la consulta de consolidado de requisiciones.")
@@ -336,11 +366,11 @@ IF USED("lcRQSaldoInventarioProducto")
 	SCAN
 		FOR i = 1 TO FCOUNT()
 			lcFieldName = FIELD(i)
-* Reemplazar NULL con cadena vacía
+			* Reemplazar NULL con cadena vacía
 			IF ISNULL(EVAL(lcFieldName))
 				REPLACE (lcFieldName) WITH 0
 			ELSE
-* Formatear campos numéricos como enteros
+				* Formatear campos numéricos como enteros
 				IF TYPE(lcFieldName) == "N"
 					REPLACE (lcFieldName) WITH INT(EVAL(lcFieldName))
 				ENDIF
@@ -400,6 +430,8 @@ GO TOP
 IF EOF()
 	ERROR ("No se encontraron requisiciones para el filtro ingresado.")
 ENDIF
+
+lcBusqueda = .T.
 
 AFIELDS(lcFieldsTb2, "lcRQSaldoInventarioProducto")
 
