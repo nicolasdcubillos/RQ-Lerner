@@ -729,6 +729,7 @@ Endif
 
 		mStrSql = " Select Mtprocli.Nit As Nit,Mtprocli.Emailp As emailp,' ' as EMAILP2 "+;
 		" From Mtprocli Where Mtprocli.ESPROVEE='S' And Mtprocli.Nit=?pNit "
+		_CLIPTEXT = mStrSql
 *!*	Else
 
 *!*	   		mstrsql =   " Select Mtnitres.Nitasigna As Nit,Mtnitres.Email As emailp "+;

@@ -805,7 +805,7 @@ IF !EMPTY(lcEmails.XEMAIL3) OR lcEmails.XEMAIL3 != ""
 	Do EnviaEmailReporte With lcEmails.XEMAIL3,mAsunto,mDetalleCuerpo,mArchivoPDF
 ENDIF
 
-lcSqlQuery = "SELECT VALOR FROM MTGLOBAL WHERE CAMPO = 'EMAILCOPIA'"
+lcSqlQuery = "SELECT VALOR FROM MTGLOBAL WHERE CAMPO = 'EMAILCOPIARQ'"
 
 IF SQLEXEC(gConexEmp, lcSqlQuery, "lcEmailCopia") <= 0
 		oGenerica.Mensajes("No se pudo obtener los datos de email copia para la empresa")
