@@ -716,20 +716,21 @@ mStrSql1="select dctomae from tipodcto where dctomae=?pTipoDcto"
 If SQLExec(gConexEmp,mStrSql1,'cLista')<=0
 	oGenerica.Mensajes("No se ejecuto la conexión a la tabla TipoDcto")
 Endif
-Select cLista
-Go Top
-If !Eof()
-	mEsRQ=cLista.DctoMae
-Else
-	mEsRQ=""
-Endif
+*!*	Select cLista
+*!*	Go Top
+*!*	If !Eof()
+*!*		mEsRQ=cLista.DctoMae
+*!*	Else
+*!*		mEsRQ=""
+*!*	Endif
 
 
-If mEsRQ=""
+*!*	If mEsRQ=""
 
-	mStrSql = " Select Mtprocli.Nit As Nit,Mtprocli.Emailp As emailp,' ' as EMAILP2 "+;
+		mStrSql = " Select Mtprocli.Nit As Nit,Mtprocli.Emailp As emailp,' ' as EMAILP2 "+;
 		" From Mtprocli Where Mtprocli.ESPROVEE='S' And Mtprocli.Nit=?pNit "
-Else
+		_CLIPTEXT = mStrSql
+*!*	Else
 
 *!*	   		mstrsql =   " Select Mtnitres.Nitasigna As Nit,Mtnitres.Email As emailp "+;
 *!*	              " From  Mtnitres Where Mtnitres.Nitasigna=?mNitResponsableRQ "
@@ -740,9 +741,9 @@ Else
 *!*			" FROM Mtnitres "+;
 *!*			" INNER JOIN MTPROCLI ON MTPROCLI.NIT = MTNITRES.NITASIGNA "+;
 *!*			" WHERE Mtnitres.Nitasigna =?mNitResponsableRQ "
-		mStrSql = "SELECT MTNITRES.NITASIGNA AS NIT, MTNITRES.EMAILP AS EMAILP FROM MTNITRES WHERE Mtnitres.Nitasigna = ?mNitResponsableRQ"
+*!*		mStrSql = "SELECT MTNITRES.NITASIGNA AS NIT, MTNITRES.EMAILP AS EMAILP FROM MTNITRES WHERE Mtnitres.Nitasigna = ?mNitResponsableRQ"
 
-Endif
+*!*	Endif
 
 If SQLExec(gConexEmp,mStrSql,"curDatos")<=0
 	oGenerica.Mensajes("No es posible seleccionar los datos de email")
@@ -751,22 +752,24 @@ Endif
 Select curDatos
 Go Top
 
-If mEsRQ <> "" And (Empty(curDatos.EMAILP) And curDatos.emailp2 <> "")
-	mEmailEnviar =curDatos.emailp2
-Endif
+*!*	If mEsRQ <> "" And (Empty(curDatos.EMAILP) And curDatos.emailp2 <> "")
+*!*		mEmailEnviar =curDatos.emailp2
+*!*	Endif
 
 
-If mEsRQ <> "" And (!Empty(curDatos.EMAILP) And curDatos.emailp2="")
-	mEmailEnviar =curDatos.EMAILP
-Endif
+*!*	If mEsRQ <> "" And (!Empty(curDatos.EMAILP) And curDatos.emailp2="")
+*!*		mEmailEnviar =curDatos.EMAILP
+*!*	Endif
 
-If mEsRQ <> "" And (!Empty(curDatos.EMAILP) And curDatos.emailp2<>"")
-	mEmailEnviar =curDatos.EMAILP
-Endif
+*!*	If mEsRQ <> "" And (!Empty(curDatos.EMAILP) And curDatos.emailp2<>"")
+*!*		mEmailEnviar =curDatos.EMAILP
+*!*	Endif
 
-If mEsRQ <> "" And (Empty(curDatos.EMAILP) And curDatos.emailp2="")
-	mEmailEnviar =""
-Endif
+*!*	If mEsRQ <> "" And (Empty(curDatos.EMAILP) And curDatos.emailp2="")
+*!*		mEmailEnviar =""
+*!*	Endif
+
+mEmailEnviar = curDatos.EMAILP
 
 
 If Empty(mEmailEnviar)
@@ -781,7 +784,7 @@ Return mEmailEnviar
 
 FUNCTION sendEmailToAditionalEmails(pNit, mAsunto, mDetalleCuerpo, mArchivoPDF)
 
-LOCAL lcEmails
+LOCAL lcEmails, lcEmailCopia
 
 lcSqlQuery = "SELECT XEMAIL1, XEMAIL2, XEMAIL3 FROM MTPROCLI WHERE NIT = '" + TRANSFORM(pNit) + "'"
 
@@ -789,6 +792,7 @@ IF SQLEXEC(gConexEmp, lcSqlQuery, "lcEmails") <= 0
 		oGenerica.Mensajes("No se pudo obtener los datos de email adicionales para el NIT " + ALLTRIM(TRANSFORM(pNit)))
 	RETURN ""
 ENDIF
+
 IF !EMPTY(lcEmails.XEMAIL1) OR lcEmails.XEMAIL1 != ""
 	Do EnviaEmailReporte With lcEmails.XEMAIL1,mAsunto,mDetalleCuerpo,mArchivoPDF
 ENDIF
@@ -799,6 +803,17 @@ ENDIF
 
 IF !EMPTY(lcEmails.XEMAIL3) OR lcEmails.XEMAIL3 != ""
 	Do EnviaEmailReporte With lcEmails.XEMAIL3,mAsunto,mDetalleCuerpo,mArchivoPDF
+ENDIF
+
+lcSqlQuery = "SELECT VALOR FROM MTGLOBAL WHERE CAMPO = 'EMAILCOPIA'"
+
+IF SQLEXEC(gConexEmp, lcSqlQuery, "lcEmailCopia") <= 0
+		oGenerica.Mensajes("No se pudo obtener los datos de email copia para la empresa")
+	RETURN ""
+ENDIF
+
+IF !EMPTY(lcEmailCopia.VALOR) OR lcEmailCopia.VALOR != ""
+	Do EnviaEmailReporte With lcEmailCopia.VALOR,mAsunto,mDetalleCuerpo,mArchivoPDF
 ENDIF
 
 ENDFUNC

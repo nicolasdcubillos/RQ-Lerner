@@ -25,7 +25,7 @@ TRY
 	oSheet = oWorkbook.Sheets(1)
 
 * Validaciones del formato
-	lcColumnsCountShouldBe = 12
+	lcColumnsCountShouldBe = 11
 	IF oSheet.UsedRange.COLUMNS.COUNT != lcColumnsCountShouldBe
 		errMsg = "El formato del archivo Excel seleccionado es incorrecto. Debe contener " + ;
 			ALLTRIM(STR(lcColumnsCountShouldBe)) + " columnas y contiene " + ALLTRIM(STR(oSheet.UsedRange.COLUMNS.COUNT)) + "."
@@ -56,8 +56,7 @@ TRY
 		Precio N(12,2), ;
 		Cantidad N(10,2), ;
 		CodSede C(50), ;
-		Sede C(50), ;
-		Estado C(50) ;
+		Sede C(50) ;
 		)
 
 	FOR lnRow = lcStartRow TO oSheet.UsedRange.ROWS.COUNT
@@ -88,12 +87,10 @@ TRY
 
 		lcSede = getValueWithoutValidate(oSheet.Cells(lnRow, 11).VALUE, oSheet.Cells(1, 11).VALUE, @outErrorMsg)
 
-&&lcCodResponsable = getValue(TRANSFORM(oSheet.Cells(lnRow, 12).VALUE), oSheet.Cells(1, 12).VALUE, @outErrorMsg)
-&&validateResponsable(lcCodResponsable, @outErrorMsg)
+		&&lcCodResponsable = getValue(TRANSFORM(oSheet.Cells(lnRow, 12).VALUE), oSheet.Cells(1, 12).VALUE, @outErrorMsg)
+		&&validateResponsable(lcCodResponsable, @outErrorMsg)
 
-&&lcResponsable = getValueWithoutValidate(oSheet.Cells(lnRow, 13).VALUE, oSheet.Cells(1, 13).VALUE, @outErrorMsg)
-
-		lcEstado = getValueWithoutValidate(oSheet.Cells(lnRow, 12).VALUE, oSheet.Cells(1, 12).VALUE, @outErrorMsg)
+		&&lcResponsable = getValueWithoutValidate(oSheet.Cells(lnRow, 13).VALUE, oSheet.Cells(1, 13).VALUE, @outErrorMsg)
 
 		IF EMPTY(outErrorMsg)
 			oSheet.Cells(lcActualRow, lnLastCol).VALUE = ""
@@ -110,8 +107,7 @@ TRY
 				lnPrecio, ;
 				lnCantidad, ;
 				lcCodSede, ;
-				lcSede, ;
-				lcEstado ;
+				lcSede ;
 				)
 
 		ELSE
