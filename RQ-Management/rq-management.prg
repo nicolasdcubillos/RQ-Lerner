@@ -251,9 +251,7 @@ SCAN
 			
 			IF (lcCantidad != 0)
 				lcCodCcGrupo = collectionUbicaciones.ITEM(lcForm.rqData.COLUMNS(i).Header1.CAPTION)
-				SELECT outRqData
-				BROWSE
-				BROW
+
 				saveMvTrade(outRqData.CodProveed, ;
 					gCodUsuario, ;
 					lcCodCcGrupo, ;
