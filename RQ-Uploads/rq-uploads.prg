@@ -292,14 +292,15 @@ SCAN
 		outRqData.ISBN, ;
 		outRqData.Cantidad, ;
 		outRqData.Precio, ;
-		rqConsecutAssigned)
+		rqConsecutAssigned, ;
+		"")
 ENDSCAN
 updateRQConsecut()
 ENDFUNC
 
 *---------------------------------------------------
 
-FUNCTION saveMvTrade(lcCodProveedor, gCodUsuario, lcCodSede, lcISBN, lcCantidad, lcPrecio, rqConsecutAssigned) AS STRING
+FUNCTION saveMvTrade(lcCodProveedor, gCodUsuario, lcCodSede, lcISBN, lcCantidad, lcPrecio, rqConsecutAssigned, lcNota) AS STRING
 
 lcSqlQuery = "EXEC dbo.GuardarMvTradeRequisicion '" + ;
 			 TRANSFORM(lcCodProveedor) + ;
@@ -309,7 +310,8 @@ lcSqlQuery = "EXEC dbo.GuardarMvTradeRequisicion '" + ;
 	"', '" + TRANSFORM(lcCantidad) + ;
 	"', '" + TRANSFORM(lcPrecio) + ;
 	"', '" + TRANSFORM(rqTipoDctoMae) + ;
-	"', '" + TRANSFORM(rqConsecutAssigned) ;
+	"', '" + TRANSFORM(rqConsecutAssigned) +;
+	"', '" + TRANSFORM(lcNota) ;
 	+ "'"
 
 IF SQLEXEC(ON, lcSqlQuery) != 1

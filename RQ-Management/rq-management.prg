@@ -115,7 +115,7 @@ ENDFUNC
 
 *---------------------------------------------------
 
-FUNCTION saveMvTrade(lcCodProveedor, gCodUsuario, lcCodSede, lcISBN, lcCantidad, lcPrecio, rqConsecutAssigned) AS STRING
+FUNCTION saveMvTrade(lcCodProveedor, gCodUsuario, lcCodSede, lcISBN, lcCantidad, lcPrecio, rqConsecutAssigned, lcNota) AS STRING
 
 lcSqlQuery = "EXEC dbo.GuardarMvTradeRequisicion '" + ;
 	TRANSFORM(lcCodProveedor) + ;
@@ -125,7 +125,8 @@ lcSqlQuery = "EXEC dbo.GuardarMvTradeRequisicion '" + ;
 	"', '" + TRANSFORM(lcCantidad) + ;
 	"', '" + TRANSFORM(lcPrecio) + ;
 	"', '" + TRANSFORM(ocTipoDctoMae) + ;
-	"', '" + TRANSFORM(ocConsecutAssigned) ;
+	"', '" + TRANSFORM(ocConsecutAssigned) +;
+	"', '" + TRANSFORM(lcNota) ;
 	+ "'"
 
 IF SQLEXEC(ON, lcSqlQuery) != 1
@@ -250,14 +251,17 @@ SCAN
 			
 			IF (lcCantidad != 0)
 				lcCodCcGrupo = collectionUbicaciones.ITEM(lcForm.rqData.COLUMNS(i).Header1.CAPTION)
-
+				SELECT outRqData
+				BROWSE
+				BROW
 				saveMvTrade(outRqData.CodProveed, ;
 					gCodUsuario, ;
 					lcCodCcGrupo, ;
 					outRqData.PRODUCTO_A, ;
 					lcCantidad, ;
 					outRqData.VALORUNIT, ;
-					ocConsecutAssigned)
+					ocConsecutAssigned, ;
+					outRqData.NOTA)
 					
 		    	lcCantidadTotal = lcCantidadTotal + lcCantidad
 			ENDIF

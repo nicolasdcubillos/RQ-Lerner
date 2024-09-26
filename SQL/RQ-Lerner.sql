@@ -162,7 +162,8 @@ CREATE PROCEDURE dbo.GuardarMvTradeRequisicion
 @cantidad VARCHAR(255),
 @precio NUMERIC(12, 2),
 @rqTipoDcto VARCHAR(255),
-@rqNroDcto INTEGER
+@rqNroDcto INTEGER,
+@nota VARCHAR(50)
 AS
 BEGIN
     INSERT INTO
@@ -188,7 +189,8 @@ VALORUNIT,
 VLRVENTA,
 PASSWORDIN,
 RQ_ESTADO,
-BODEGA)
+BODEGA,
+NOTA)
 VALUES
 (
 'COM', /* Origen */
@@ -211,7 +213,8 @@ ISNULL(@cantidad, 0), /* RQ_Cantidad_OC */
 @precio, /* Vlrventa */
 @gCodUsuario, /* Passwordin */
 0, /* RQ_Estado */
-'C'); /* Bodega */
+'C',	/* Bodega */
+@nota); /* Nota */
 
 END;
 GO

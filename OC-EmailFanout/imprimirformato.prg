@@ -628,8 +628,8 @@ Do While pDocumentoInicial <= pDocumentoFinal
 *mEmailDestino="ofima@ofima.com"
 
 			If Not Empty(mEmailDestino)
-				mAsunto = "Reporte Factura Cliente " + Alltrim(curEncabezado.CliNombre)
-				mDetalleCuerpo = "Se anexa formato de factura "
+				mAsunto = "Pedido Librería Lerner "&& + Alltrim(curEncabezado.CliNombre)
+				mDetalleCuerpo = "Favor despachar el adjunto de acuerdo con las condiciones conocidas "
 				Do EnviaEmailReporte With mEmailDestino,mAsunto,mDetalleCuerpo,mArchivoPDF
 				sendEmailToAditionalEmails(pNit, mAsunto, mDetalleCuerpo, mArchivoPDF)
 
@@ -641,8 +641,8 @@ Do While pDocumentoInicial <= pDocumentoFinal
 					Go Top
 					mArchivoPDFSeries = CrearArchivoPDF(mFormatoSeries,.F.)
 					If Not Empty(mArchivoPDFSeries)
-						mAsunto = "Reporte Anexo de series Cliente " + Alltrim(curEncabezado.CliNombre)
-						mDetalleCuerpo = "Se anexa formato de Anexo de series "
+						mAsunto = "Pedido Librería Lerner " + Alltrim(curEncabezado.CliNombre)
+						mDetalleCuerpo = "Favor despachar el adjunto de acuerdo con las condiciones conocidas "
 						Do EnviaEmailReporte With mEmailDestino,mAsunto,mDetalleCuerpo,mArchivoPDFSeries					
 						sendEmailToAditionalEmails(pNit, mAsunto, mDetalleCuerpo, mArchivoPDFSeries)
 					Endif
