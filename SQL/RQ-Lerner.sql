@@ -390,7 +390,7 @@ BEGIN
     -- Get the distinct GRUPO values and concatenate them into a string
     SELECT @columns = STUFF((
 SELECT DISTINCT ', ' + QUOTENAME(GRUPO)
-FROM TEMP_UBICACIONES
+FROM X_VTEMP_UBICACIONES
 FOR XML PATH(''), TYPE
 ).value('.', 'NVARCHAR(MAX)'), 1, 2, '');
 
