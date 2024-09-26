@@ -131,7 +131,9 @@ NITRESP,
 CODCC,
 DCTOPRV,
 ACTIVA,
-AUTORIZA)
+AUTORIZA,
+APRUEBA,
+APROBADO)
 VALUES
 (
 'COM', /* Origen */
@@ -146,7 +148,9 @@ CASE WHEN @codProveedor = '0' THEN '0' ELSE (SELECT NIT FROM MTPROCLI WHERE CAST
 @codSede, /* Codcc */
 @rqNroDcto, /* Dctoprv */
 1,			/* Activa */
-1);		/* Autoriza */
+1,			/* Autoriza */
+1,			/* Aprueba */
+1);			/* Aprobado */
 END;
 GO
 
