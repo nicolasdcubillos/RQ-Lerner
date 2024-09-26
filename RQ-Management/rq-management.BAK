@@ -320,7 +320,7 @@ ENDFUNC
 FUNCTION getRQs(lcForm)
 
 IF lcBusqueda = .T.
-	lcErrorMessage = "Para buscar de nuevo las requisiciones, cierre la pantalla y vuélvala a abrir."
+	lcErrorMessage = "Para realizar una nueva búsqueda, cierre y vuelva a abrir la pantalla."
 	ERROR(lcErrorMessage)
 ENDIF
 
@@ -356,7 +356,7 @@ ENDIF
 * Consultando el stored RQ_SaldoInventarioProducto
 
 IF SQLEXEC(ON, lcSqlQuerySaldo, "lcRQSaldoInventarioProducto") != 1
-	_CLIPTEXT = lcSqlQuery
+	_CLIPTEXT = lcSqlQuerySaldo
 	ERROR ("Error al realizar la consulta de saldo de inventarios.")
 ENDIF
 

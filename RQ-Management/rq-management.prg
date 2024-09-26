@@ -349,14 +349,14 @@ ELSE IF THISFORM.Optiongroup1.VALUE = 2
 ENDIF
 
 IF SQLEXEC(ON, lcSqlQueryConsolidado, "lcRQConsolidadoRequisiciones") != 1
-	_CLIPTEXT = lcSqlQuery
+	_CLIPTEXT = lcSqlQueryConsolidado
 	ERROR ("Error al realizar la consulta de consolidado de requisiciones.")
 ENDIF
 
 * Consultando el stored RQ_SaldoInventarioProducto
 
 IF SQLEXEC(ON, lcSqlQuerySaldo, "lcRQSaldoInventarioProducto") != 1
-	_CLIPTEXT = lcSqlQuery
+	_CLIPTEXT = lcSqlQuerySaldo
 	ERROR ("Error al realizar la consulta de saldo de inventarios.")
 ENDIF
 
