@@ -115,7 +115,7 @@ ENDFUNC
 
 *---------------------------------------------------
 
-FUNCTION saveMvTrade(lcCodProveedor, gCodUsuario, lcCodSede, lcISBN, lcCantidad, lcPrecio, rqConsecutAssigned, lcNota) AS STRING
+FUNCTION saveMvTrade(lcCodProveedor, gCodUsuario, lcCodSede, lcISBN, lcCantidad, lcPrecio, rqConsecutAssigned, lcNota, lcRqTipoDcto, lcRqNroDcto) AS STRING
 
 lcSqlQuery = "EXEC dbo.GuardarMvTradeRequisicion '" + ;
 	TRANSFORM(lcCodProveedor) + ;
@@ -126,7 +126,9 @@ lcSqlQuery = "EXEC dbo.GuardarMvTradeRequisicion '" + ;
 	"', '" + TRANSFORM(lcPrecio) + ;
 	"', '" + TRANSFORM(ocTipoDctoMae) + ;
 	"', '" + TRANSFORM(ocConsecutAssigned) +;
-	"', '" + TRANSFORM(lcNota) ;
+	"', '" + TRANSFORM(lcNota) +;
+	"', '" + TRANSFORM(lcRqTipoDcto) +;
+	"', '" + TRANSFORM(lcRqNroDcto) +;
 	+ "'"
 
 IF SQLEXEC(ON, lcSqlQuery) != 1
@@ -248,7 +250,9 @@ SCAN
 		FOR i = lcStartAsignaciones TO lcStartAsignaciones + lcTotalAsignaciones - 1
 			lcColumnName = FIELD(i, "outRqData")
 			lcCantidad = EVAL("outRqData." + lcColumnName)
-			
+			SELECT outRqData
+			BROWSE
+			BROW
 			IF (lcCantidad != 0)
 				lcCodCcGrupo = collectionUbicaciones.ITEM(lcForm.rqData.COLUMNS(i).Header1.CAPTION)
 
@@ -259,7 +263,9 @@ SCAN
 					lcCantidad, ;
 					outRqData.VALORUNIT, ;
 					ocConsecutAssigned, ;
-					outRqData.NOTA)
+					outRqData.NOTA, ;
+					outRqData.TIPODCTO_A, ;
+					outRqData.NRODCTO_A);
 					
 		    	lcCantidadTotal = lcCantidadTotal + lcCantidad
 			ENDIF

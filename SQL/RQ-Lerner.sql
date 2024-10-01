@@ -116,7 +116,7 @@ CREATE PROCEDURE dbo.GuardarTradeRequisicion
 AS
 BEGIN
 
-    INSERT INTO
+INSERT INTO
 TRADE
 (
 ORIGEN,
@@ -133,7 +133,11 @@ DCTOPRV,
 ACTIVA,
 AUTORIZA,
 APRUEBA,
-APROBADO)
+APROBADO,
+AUTORET,
+CALRETE,
+CALRETICA,
+ORDEN)
 VALUES
 (
 'COM', /* Origen */
@@ -150,7 +154,11 @@ CASE WHEN @codProveedor = '0' THEN '0' ELSE (SELECT NIT FROM MTPROCLI WHERE CAST
 1,			/* Activa */
 1,			/* Autoriza */
 1,			/* Aprueba */
-1);			/* Aprobado */
+1,			/* Aprobado */
+1,			/* Autoret */
+1,			/* Calrete */
+1,			/* Calretica */
+@rqNroDcto);/* Orden */
 END;
 GO
 
@@ -170,7 +178,9 @@ CREATE PROCEDURE dbo.GuardarMvTradeRequisicion
 @precio NUMERIC(12, 2),
 @rqTipoDcto VARCHAR(255),
 @rqNroDcto INTEGER,
-@nota VARCHAR(50)
+@nota VARCHAR(50),
+@tipoDctoPc VARCHAR(255),
+@norden INTEGER
 AS
 BEGIN
     INSERT INTO
@@ -197,31 +207,41 @@ VLRVENTA,
 PASSWORDIN,
 RQ_ESTADO,
 BODEGA,
-NOTA)
+NOTA,
+ITEMICA,
+ITEMIVA,
+ORDENPRV,
+TIPODCTOPC,
+NORDEN)
 VALUES
 (
-'COM', /* Origen */
-@rqTipoDcto, /* Tipodcto */
-@rqNroDcto, /* Nrodcto */
-GETDATE(), /* Fecha */
-GETDATE(), /* Fecing */
+'COM',				/* Origen */
+@rqTipoDcto,		/* Tipodcto */
+@rqNroDcto,			/* Nrodcto */
+GETDATE(),			/* Fecha */
+GETDATE(),			/* Fecing */
 CASE WHEN @codProveedor = '0' THEN '0' ELSE (SELECT NIT FROM MTPROCLI WHERE CAST(DETALLE AS VARCHAR(255)) = @codproveedor) END, /* Nit */
-@codISBN, /* Producto */
+@codISBN,			/* Producto */
 (SELECT DESCRIPCIO FROM MTMERCIA WHERE CODIGO = @codISBN), /* Nombre */
-@cantidad, /* Cantidad */
-@cantidad, /* Cantorig */
+@cantidad,			/* Cantidad */
+@cantidad,			/* Cantorig */
 ISNULL(@cantidad, 0), /* RQ_Cantidad_OC */
-@cantidad, /* Canventa */
-@codSede, /* Codcc */
-'0', /* Tipomvto */
+@cantidad,			/* Canventa */
+@codSede,			/* Codcc */
+'0',				/* Tipomvto */
 (SELECT UNIDADMED FROM MTMERCIA WHERE CODIGO = @codISBN), /* Undbase */
 (SELECT UNIDADMED FROM MTMERCIA WHERE CODIGO = @codISBN), /* Undventa */
-@precio, /* Valorunit */
-@precio, /* Vlrventa */
-@gCodUsuario, /* Passwordin */
-0, /* RQ_Estado */
-'C',	/* Bodega */
-@nota); /* Nota */
+@precio,			/* Valorunit */
+@precio,			/* Vlrventa */
+@gCodUsuario,		/* Passwordin */
+0,					/* RQ_Estado */
+'C',				/* Bodega */
+@nota,				/* Nota */
+1,					/* ITEMICA */
+1,					/* ITEMIVA */
+0,					/* ORDENPRV */
+@tipoDctoPc,		/* TIPODCTOPC */
+@norden);			/* NORDEN */
 
 END;
 GO

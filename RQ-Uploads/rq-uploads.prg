@@ -311,8 +311,8 @@ lcSqlQuery = "EXEC dbo.GuardarMvTradeRequisicion '" + ;
 	"', '" + TRANSFORM(lcPrecio) + ;
 	"', '" + TRANSFORM(rqTipoDctoMae) + ;
 	"', '" + TRANSFORM(rqConsecutAssigned) +;
-	"', '" + TRANSFORM(lcNota) ;
-	+ "'"
+	"', '" + TRANSFORM(lcNota) +;
+	"', '', ''" && Enviando tipoDctoPc y norden en blanco
 
 IF SQLEXEC(ON, lcSqlQuery) != 1
 	_CLIPTEXT = lcSqlQuery

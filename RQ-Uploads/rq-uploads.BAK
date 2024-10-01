@@ -292,7 +292,8 @@ SCAN
 		outRqData.ISBN, ;
 		outRqData.Cantidad, ;
 		outRqData.Precio, ;
-		rqConsecutAssigned)
+		rqConsecutAssigned, ;
+		"")
 ENDSCAN
 updateRQConsecut()
 ENDFUNC
