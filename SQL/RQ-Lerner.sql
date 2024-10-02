@@ -143,8 +143,8 @@ VALUES
 'COM', /* Origen */
 @rqTipoDcto, /* Tipodcto */
 @rqNroDcto, /* Nrodcto */
-GETDATE(), /* Fecha */
-GETDATE(), /* Fecing */
+CONVERT(DATE, GETDATE()), /* Fecha */
+CONVERT(DATE, GETDATE()), /* Fecing */
 (SELECT CONVERT(VARCHAR(8), GETDATE(), 108)), /* Hora */
 CASE WHEN @codProveedor = '0' THEN '0' ELSE (SELECT NIT FROM MTPROCLI WHERE CAST(DETALLE AS VARCHAR(255)) = @codProveedor) END, /* Nit */
 @gCodUsuario, /* Passwordin */
@@ -218,8 +218,8 @@ VALUES
 'COM',				/* Origen */
 @rqTipoDcto,		/* Tipodcto */
 @rqNroDcto,			/* Nrodcto */
-GETDATE(),			/* Fecha */
-GETDATE(),			/* Fecing */
+CONVERT(DATE, GETDATE()),			/* Fecha */
+CONVERT(DATE, GETDATE()),			/* Fecing */
 CASE WHEN @codProveedor = '0' THEN '0' ELSE (SELECT NIT FROM MTPROCLI WHERE CAST(DETALLE AS VARCHAR(255)) = @codproveedor) END, /* Nit */
 @codISBN,			/* Producto */
 (SELECT DESCRIPCIO FROM MTMERCIA WHERE CODIGO = @codISBN), /* Nombre */
