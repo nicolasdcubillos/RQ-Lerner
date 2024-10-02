@@ -264,8 +264,8 @@ SCAN
 					outRqData.VALORUNIT, ;
 					ocConsecutAssigned, ;
 					outRqData.NOTA, ;
-					outRqData.TIPODCTO, ;
-					outRqData.NRODCTO);
+					outRqData.TIPODCTO_A, ;
+					outRqData.NRODCTO_A);
 					
 		    	lcCantidadTotal = lcCantidadTotal + lcCantidad
 			ENDIF

@@ -250,9 +250,6 @@ SCAN
 		FOR i = lcStartAsignaciones TO lcStartAsignaciones + lcTotalAsignaciones - 1
 			lcColumnName = FIELD(i, "outRqData")
 			lcCantidad = EVAL("outRqData." + lcColumnName)
-			SELECT outRqData
-			BROWSE
-			BROW
 			IF (lcCantidad != 0)
 				lcCodCcGrupo = collectionUbicaciones.ITEM(lcForm.rqData.COLUMNS(i).Header1.CAPTION)
 
