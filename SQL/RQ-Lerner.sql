@@ -1,4 +1,4 @@
-USE LERNER;
+USE LERNER_PLUS;
 
 /* Script para crear la tabla X_SIGLAUBICA */
 
@@ -100,9 +100,9 @@ GO
 
 /*
 Function GuardarTradeRequisicion:
-FunciÛn que guarda una lÌnea de requisiciÛn en Trade.
-Par·metros:
-Los necesarios para almacenar la informaciÛn en Trade.
+Funci√≥n que guarda una l√≠nea de requisici√≥n en Trade.
+Par√°metros:
+Los necesarios para almacenar la informaci√≥n en Trade.
 */
 
 CREATE PROCEDURE dbo.GuardarTradeRequisicion
@@ -164,9 +164,9 @@ GO
 
 /*
 Function GuardarMvTradeRequisicion:
-FunciÛn que guarda una lÌnea de requisiciÛn en MvTrade.
-Par·metros:
-Los necesarios para almacenar la informaciÛn en MvTrade.
+Funci√≥n que guarda una l√≠nea de requisici√≥n en MvTrade.
+Par√°metros:
+Los necesarios para almacenar la informaci√≥n en MvTrade.
 */
 
 CREATE PROCEDURE dbo.GuardarMvTradeRequisicion
@@ -212,7 +212,8 @@ ITEMICA,
 ITEMIVA,
 ORDENPRV,
 TIPODCTOPC,
-NORDEN)
+NORDEN,
+IDPEDORD)
 VALUES
 (
 'COM',				/* Origen */
@@ -241,16 +242,17 @@ ISNULL(@cantidad, 0), /* RQ_Cantidad_OC */
 1,					/* ITEMIVA */
 0,					/* ORDENPRV */
 @tipoDctoPc,		/* TIPODCTOPC */
-@norden);			/* NORDEN */
+@norden,			/* NORDEN */
+(SELECT MAX(IDPEDORD) + 1 FROM MVTRADE)); /* IDPEDORD */
 
 END;
 GO
 
 /*
 Function RQ_ConsolidadoRequisiciones:
-Esta funciÛn retorna el consolidado de requisiciones dada una fecha inicial y final.
-Revisar· si el estado de la RQ es cero o nulo, significa que la RQ no ha sido pasada a despacho y/o Ûrden de compra.
-Par·metros:
+Esta funci√≥n retorna el consolidado de requisiciones dada una fecha inicial y final.
+Revisar√° si el estado de la RQ es cero o nulo, significa que la RQ no ha sido pasada a despacho y/o √≥rden de compra.
+Par√°metros:
 @fecha1: Fecha inicial de la consulta
 @fecha2: Fecha final de la consulta
 @rqTipoDcto: El tipo de documento sobre el cual se va a generar la consulta
@@ -301,9 +303,9 @@ GO
 
 /*
 Function RQ_ConsolidadoRequisicionesRango:
-Esta funciÛn retorna el consolidado de requisiciones dada un n˙mero de documento inicial y final
-Revisar· si el estado de la RQ es cero o nulo, significa que la RQ no ha sido pasada a despacho y/o Ûrden de compra.
-Par·metros:
+Esta funci√≥n retorna el consolidado de requisiciones dada un n√∫mero de documento inicial y final
+Revisar√° si el estado de la RQ es cero o nulo, significa que la RQ no ha sido pasada a despacho y/o √≥rden de compra.
+Par√°metros:
 @fecha1: Fecha inicial de la consulta
 @fecha2: Fecha final de la consulta
 @rqTipoDcto: El tipo de documento sobre el cual se va a generar la consulta
@@ -354,9 +356,9 @@ GO
 
 /*
 Procedure RQ_SaldosInventario:
-FunciÛn que consulta los saldos de un producto que recibe por par·metro y recibe el saldo agrupado por GRUPO configurado en las tablas.
-Par·metros:
-@producto - CÛdigo del producto a buscar
+Funci√≥n que consulta los saldos de un producto que recibe por par√°metro y recibe el saldo agrupado por GRUPO configurado en las tablas.
+Par√°metros:
+@producto - C√≥digo del producto a buscar
 */
 
 CREATE FUNCTION [dbo].[RQ_SaldosInventario]
@@ -397,9 +399,9 @@ GO
 /*
 Procedure RQ_SaldoInventarioProducto:
 Este procedure consulta el saldo de inventario para las RQs encontradas en un rango de fechas y por medio de la
-funciÛn PIVOT la retorna en columnas variables (columna por ubicaciÛn y su saldo de inventario).
-El n˙mero de columnas varÌa dependiendo de las sedes que se tengan creadas en el sistema.
-Par·metros:
+funci√≥n PIVOT la retorna en columnas variables (columna por ubicaci√≥n y su saldo de inventario).
+El n√∫mero de columnas var√≠a dependiendo de las sedes que se tengan creadas en el sistema.
+Par√°metros:
 @fecha1: Fecha inicial de la consulta
 @fecha2: Fecha final de la consulta
 @rqTipoDcto: El tipo de documento sobre el cual se va a generar la consulta
@@ -522,7 +524,7 @@ GO
 
 
 CREATE Procedure X_ACTUALIZA_SIGLACODCC
--- Se declaran los par·metros de actualizaciÛn
+-- Se declaran los par√°metros de actualizaci√≥n
 (
 @pSigla Varchar (5),
 @pGrupo Varchar (60),
@@ -533,7 +535,7 @@ CREATE Procedure X_ACTUALIZA_SIGLACODCC
 As Begin
 
 
--- Inicia transacciÛn
+-- Inicia transacci√≥n
 Begin Try
 If @pEliminar = 1
 Begin
@@ -541,20 +543,20 @@ Begin
 Execute DBO.OF_SP_ValidarForeingkey X_SIGLAUBICA,@pSigla
 End
 -----------------------------------------------------------------------------------
--- Corre las rutinas de eliminaciÛn, actualizaciÛn e inserciÛn
--- EliminaciÛn
+-- Corre las rutinas de eliminaci√≥n, actualizaci√≥n e inserci√≥n
+-- Eliminaci√≥n
 If @pEliminar = 1
 Begin
 Delete X_SIGLAUBICA Where Sigla = @pSigla
 End
 Else
 Begin
--- ActualizaciÛn
+-- Actualizaci√≥n
 If  Exists(Select Sigla  From X_SIGLAUBICA  Where Sigla = @pSigla)
 Begin
 Update X_SIGLAUBICA Set  GRUPO = @pGrupo,Codcc=@PCodcc  Where Sigla = @psigla
 End
--- InserciÛn
+-- Inserci√≥n
 Else
 Begin
 Insert  X_SIGLAUBICA (Sigla,grupo,codcc,Eliminar)
@@ -562,11 +564,11 @@ Values (@pSigla,@pGrupo,@PCodcc,0)
 End
 End
 -----------------------------------------------------------------------------------
--- Finaliza transacciÛn
+-- Finaliza transacci√≥n
 End Try
 
 
---- RecolecciÛn de errores
+--- Recolecci√≥n de errores
 BEGIN CATCH
 
 DECLARE @ErrorMessage NVARCHAR(4000);
