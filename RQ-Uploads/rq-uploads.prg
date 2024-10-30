@@ -1,3 +1,4 @@
+
 */
 *!*
 *!*		Nombre: Cargue de Requisiciones desde Archivo Excel - Libreria Lerner
@@ -294,6 +295,9 @@ SCAN
 		outRqData.Precio, ;
 		rqConsecutAssigned, ;
 		"")
+		
+	updateIdPedOrd(rqTipoDctoMae, rqConsecutAssigned)
+	
 ENDSCAN
 updateRQConsecut()
 ENDFUNC
@@ -404,3 +408,16 @@ RETURN
 
 ENDFUNC
 
+*---------------------------------------------------
+
+FUNCTION updateIdPedOrd(rqTipoDctoMae, rqConsecutAssigned)
+
+lcSqlQuery = "UPDATE MVTRADE SET IDPEDORD = IDMVTRADE " + ;
+	" WHERE TIPODCTO = '" + rqTipoDctoMae + "' AND NRODCTO = '" + TRANSFORM(rqConsecutAssigned) + "'"
+
+IF SQLEXEC(ON, lcSqlQuery) != 1
+	_CLIPTEXT = lcSqlQuery
+	&&ERROR("Error al actualizar el IDPEDORD de la RQ para el registro IdMvTrade " + ALLTRIM(TRANSFORM(lcIdMvTrade)) + ".")
+ENDIF
+
+ENDFUNC

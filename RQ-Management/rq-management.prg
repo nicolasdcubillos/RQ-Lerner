@@ -48,6 +48,20 @@ ENDFUNC
 
 *---------------------------------------------------
 
+FUNCTION updateIdPedOrd(lcIdMvTrade)
+
+lcSqlQuery = "UPDATE MVTRADE SET IDPEDORD = IDMVTRADE " + ;
+	" WHERE IDMVTRADE = '" + TRANSFORM(lcIdMvTrade) + "'"
+
+IF SQLEXEC(ON, lcSqlQuery) != 1
+	_CLIPTEXT = lcSqlQuery
+	ERROR("Error al actualizar el IDPEDORD de la RQ para el registro IdMvTrade " + ALLTRIM(TRANSFORM(lcIdMvTrade)) + ".")
+ENDIF
+
+ENDFUNC
+
+*---------------------------------------------------
+
 FUNCTION getRqTipoDcto()
 LOCAL lcValidation
 
@@ -272,6 +286,7 @@ SCAN
 		updateRqTotals(ocConsecutAssigned, lcBruto)
 
 		updateRqStatus(outRqData.IdMvTrade_, 2)
+		updateIdPedOrd(outRqData.IdMvTrade_)
 
 		lcOcCreated = lcOcCreated + 1
 		
