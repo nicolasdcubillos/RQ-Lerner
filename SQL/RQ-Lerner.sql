@@ -242,8 +242,7 @@ ISNULL(@cantidad, 0), /* RQ_Cantidad_OC */
 1,					/* ITEMIVA */
 0,					/* ORDENPRV */
 @tipoDctoPc,		/* TIPODCTOPC */
-@norden,			/* NORDEN */
-(SELECT MAX(IDPEDORD) + 1 FROM MVTRADE)); /* IDPEDORD */
+@norden);			/* NORDEN */
 
 END;
 GO
