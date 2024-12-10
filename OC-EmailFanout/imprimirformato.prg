@@ -626,10 +626,10 @@ Do While pDocumentoInicial <= pDocumentoFinal
 			mEmailDestino = ObtenerEmail(pNit)
 *mEmailDestino = ObtenerEmail(curEncabezado.Nit)
 *mEmailDestino="ofima@ofima.com"
-
+			mDetalleCuerpo = "Favor despachar el adjunto de acuerdo con las condiciones conocidas." ;
+										  + CHR(13) + CHR(13) + "Por favor registrar sin excepción el número de esta orden de compra en el documento de entrega del pedido."
 			If Not Empty(mEmailDestino)
 				mAsunto = "Pedido Librería Lerner "&& + Alltrim(curEncabezado.CliNombre)
-				mDetalleCuerpo = "Favor despachar el adjunto de acuerdo con las condiciones conocidas "
 				Do EnviaEmailReporte With mEmailDestino,mAsunto,mDetalleCuerpo,mArchivoPDF
 				sendEmailToAditionalEmails(pNit, mAsunto, mDetalleCuerpo, mArchivoPDF)
 
@@ -642,7 +642,6 @@ Do While pDocumentoInicial <= pDocumentoFinal
 					mArchivoPDFSeries = CrearArchivoPDF(mFormatoSeries,.F.)
 					If Not Empty(mArchivoPDFSeries)
 						mAsunto = "Pedido Librería Lerner " + Alltrim(curEncabezado.CliNombre)
-						mDetalleCuerpo = "Favor despachar el adjunto de acuerdo con las condiciones conocidas "
 						Do EnviaEmailReporte With mEmailDestino,mAsunto,mDetalleCuerpo,mArchivoPDFSeries					
 						sendEmailToAditionalEmails(pNit, mAsunto, mDetalleCuerpo, mArchivoPDFSeries)
 					Endif
