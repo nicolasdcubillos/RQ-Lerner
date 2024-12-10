@@ -232,10 +232,9 @@ ENDFUNC
 FUNCTION saveOC(lcForm) AS STRING
 
 SELECT outRqData
-lcCantidadTotal = 0
 GO TOP
 SCAN
-
+	lcCantidadTotal = 0
 	saveData(outRqData.IDMVTRADE2, outRqData.CANTIDAD_O) && Irá a guardar la cantidad editable indiferentemente de si se crea OC o no
 	lcCodProveedString = TRANSFORM(outRqData.CodProveed)
 	IF outRqData.CHECKOC == 1
